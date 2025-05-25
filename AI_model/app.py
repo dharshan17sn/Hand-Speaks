@@ -1,4 +1,3 @@
-
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import numpy as np
@@ -8,6 +7,14 @@ import requests
 from dotenv import load_dotenv
 import time
 from typing import Dict
+import csv
+import logging
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import LSTM, Dense, Dropout
+from tensorflow.keras.utils import to_categorical
+import matplotlib.pyplot as plt
+import pandas as pd
+
 
 # Load environment variables
 load_dotenv()
@@ -15,17 +22,30 @@ HF_API_TOKEN = os.getenv("HF_API_TOKEN")
 GEMINI_API_KEY = "AIzaSyCOk7MFwGHQHY8u6uCqD5wX684p-WB7F9w"
 
 # Load the pre-trained gesture model (trained on 9 features per frame)
-model = load_model('AI_model/model.h5')
-unique_labels = ["hello", "thank you", "no gesture", "what", "your", "name"]
+model = load_model('model.h5')
+unique_labels = np.load('unique_labels.npy', allow_pickle=True)
 
 # Constants
-SEQUENCE_LENGTH = 120  # Length of sequences for prediction
+SEQUENCE_LENGTH = 100  # Length of sequences for prediction
 FEATURES_PER_FRAME = 9  # accel (3) + gravity (3) + angular velocity (3)
+
+# Feature indices in the input data
+FEATURE_INDICES = {
+    'acceleration': [0, 1, 2],  # x, y, z
+    'gravity': [3, 4, 5],      # x, y, z
+    'angular_velocity': [6, 7, 8]  # x, y, z
+}
 
 app = Flask(__name__)
 
 # Configure CORS
-CORS(app, resources={r"/*": {"origins": "*", "methods": ["POST"], "allow_headers": ["Content-Type"]}})
+CORS(app, resources={
+    r"/*": {
+        "origins": "*",
+        "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        "allow_headers": ["Content-Type"]
+    }
+})
 
 class GeminiEnhancer:
     def __init__(self):
@@ -125,24 +145,43 @@ text_enhancer = GeminiEnhancer()
 @app.route('/predict', methods=['POST'])
 def predict():
     """Endpoint for gesture prediction (using only 9 features per frame)"""
-    data = request.get_json()
-    new_data = data.get('sensor_data', [])
-
-    expected_length = SEQUENCE_LENGTH * FEATURES_PER_FRAME
-    if len(new_data) != expected_length:
-        return jsonify({"error": f"Invalid data format, expected {expected_length} values, got {len(new_data)}."}), 400
-    
-    # Reshape to (1, SEQUENCE_LENGTH, 9)
-    data_buffer = np.array(new_data).reshape((1, SEQUENCE_LENGTH, FEATURES_PER_FRAME))
-
     try:
+        data = request.get_json()
+        new_data = data.get('sensor_data', [])
+
+        expected_length = SEQUENCE_LENGTH * FEATURES_PER_FRAME
+        if len(new_data) != expected_length:
+            return jsonify({
+                "error": f"Invalid data format, expected {expected_length} values (100 frames × 9 features), got {len(new_data)}.",
+                "details": "Using only acceleration, gravity, and angular velocity features (3 values each)"
+            }), 400
+        
+        # Reshape to (1, SEQUENCE_LENGTH, 9)
+        data_buffer = np.array(new_data).reshape((1, SEQUENCE_LENGTH, FEATURES_PER_FRAME))
+        
         prediction = model.predict(data_buffer)
         predicted_class = np.argmax(prediction, axis=1)
         result = unique_labels[predicted_class[0]]
-        return jsonify({"prediction": result})
+        
+        # Add confidence score
+        confidence = float(prediction[0][predicted_class[0]])
+        
+        # Simply return the prediction result
+        return jsonify({
+            "prediction": result,
+            "confidence": confidence
+        })
 
     except Exception as e:
-        return jsonify({"error": f"Error in prediction: {str(e)}"}), 500
+        import traceback
+        error_details = {
+            "error": str(e),
+            "traceback": traceback.format_exc(),
+            "input_length": len(new_data) if 'new_data' in locals() else None,
+            "expected_length": SEQUENCE_LENGTH * FEATURES_PER_FRAME
+        }
+        print("Error details:", error_details)  # Print to server console
+        return jsonify(error_details), 500
 
 @app.route('/enhance-text', methods=['POST'])
 def enhance_text():
@@ -174,10 +213,174 @@ def enhance_text():
     except Exception as e:
         return jsonify({
             "error": f"Text enhancement failed: {str(e)}",
-
             "grammar_corrected": text,
             "tone_adjusted": text
         }), 500
+
+@app.route('/row-count', methods=['GET'])
+def get_row_count():
+    """Get the number of rows in the sensor.csv file"""
+    try:
+        with open('AI_model\sensor.csv', 'r') as file:
+            # Subtract 1 to exclude the header row
+            row_count = sum(1 for _ in file) - 1
+            return jsonify({"row_count": row_count})
+    except FileNotFoundError:
+        return jsonify({"row_count": 0})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/save_csv', methods=['POST'])
+def save_csv():
+    """Save recorded data to sensor.csv"""
+    try:
+        data = request.get_json()
+        rows = data.get('csv_data', [])
+        
+        if not rows:
+            return jsonify({"error": "No data provided"}), 400
+
+        filename = 'D:/projects/Hand-Speaks/AI_model/sensor.csv'
+            
+        # Append the data
+        with open(filename, mode='a', newline='') as csvfile:
+            for row in rows:
+                # Split the row string into values and write directly
+                csvfile.write(row + '\n')
+            logging.info(f"Recorded {len(rows)} rows of data.")
+            
+        return jsonify({
+            "message": f"Successfully saved {len(rows)} rows of data",
+            "rows_saved": len(rows)
+        })
+        
+    except Exception as e:
+        logging.error(f"Error saving CSV data: {str(e)}")
+        return jsonify({"error": f"Failed to save data: {str(e)}"}), 500
+
+@app.route('/delete_rows', methods=['POST'])
+def delete_rows():
+    """Delete rows from sensor.csv by ID or label"""
+    try:
+        data = request.get_json()
+        delete_type = data.get('type')
+        delete_value = data.get('value')
+        
+        if not delete_type or not delete_value:
+            return jsonify({"error": "Delete type and value must be provided"}), 400
+            
+        if delete_type not in ['id', 'label']:
+            return jsonify({"error": "Invalid delete type. Must be 'id' or 'label'"}), 400
+            
+        # Read all rows
+        rows = []
+        with open('D:/projects/Hand-Speaks/AI_model/sensor.csv', 'r') as file:
+            reader = csv.reader(file)
+            header = next(reader)  # Get header
+            
+            # Get the index for comparison based on type
+            if delete_type == 'id':
+                compare_index = 0  # ID is first column
+            else:  # label
+                compare_index = -1  # Character/Label is last column
+                
+            # Filter rows that don't match the delete value
+            rows = [row for row in reader if row[compare_index] != str(delete_value)]
+        
+        # Calculate how many rows were deleted
+        deleted_count = 0
+        with open('D:/projects/Hand-Speaks/AI_model/sensor.csv', 'r') as file:
+            total_rows = sum(1 for _ in file) - 1  # -1 for header
+            deleted_count = total_rows - len(rows)
+        
+        # Write back all rows except those matching the delete criteria
+        with open('D:/projects/Hand-Speaks/AI_model/sensor.csv', 'w', newline='') as file:
+            writer = csv.writer(file)
+            writer.writerow(header)
+            writer.writerows(rows)
+            
+        return jsonify({
+            "message": f"Successfully deleted {deleted_count} rows with {delete_type}: {delete_value}",
+            "deleted_count": deleted_count
+        })
+        
+    except Exception as e:
+        logging.error(f"Error deleting rows: {str(e)}")
+        return jsonify({"error": f"Failed to delete rows: {str(e)}"}), 500
+@app.route('/train_model', methods=['POST'])
+def train_model():
+    """Train the LSTM model from sensor.csv"""
+    try:
+        file_path = 'D:/projects/Hand-Speaks/AI_model/sensor.csv'
+        sequence_length = 100
+
+        data = pd.read_csv(file_path)
+
+        feature_columns = [
+            'Acceleration_x', 'Acceleration_y', 'Acceleration_z',
+            'Gravity_x', 'Gravity_y', 'Gravity_z',
+            'Angular Velocity_x', 'Angular Velocity_y', 'Angular Velocity_z'
+        ]
+
+        segments = []
+        for id_, group in data.groupby('ID'):
+            label = group['Character'].iloc[0]
+            samples = group[feature_columns].values
+            for start in range(0, len(samples) - sequence_length + 1):
+                segment = samples[start:start + sequence_length]
+                segments.append((segment, label))
+
+        if not segments:
+            return jsonify({"error": "Not enough data to form sequences."}), 400
+
+        segment_df = pd.DataFrame(segments, columns=['Segment', 'Label'])
+        X = np.array(segment_df['Segment'].tolist())
+        y = np.array(segment_df['Label'].tolist())
+
+        y_encoded, unique_labels = pd.factorize(y)
+        y_categorical = to_categorical(y_encoded)
+
+        X_train, X_test, y_train, y_test = train_test_split(X, y_categorical, test_size=0.2, random_state=42)
+
+        model = Sequential()
+        model.add(LSTM(64, return_sequences=True, input_shape=(sequence_length, 9)))
+        model.add(Dropout(0.2))
+        model.add(LSTM(64))
+        model.add(Dropout(0.2))
+        model.add(Dense(len(unique_labels), activation='softmax'))
+
+        model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+
+        history = model.fit(X_train, y_train, epochs=8, batch_size=32, validation_data=(X_test, y_test))
+
+        loss, accuracy = model.evaluate(X_test, y_test)
+        training_history = {
+            "message": "Model trained successfully",
+            "training_history": training_history,
+            "loss": [float(h) for h in history.history['loss']],
+            "val_loss": [float(h) for h in history.history['val_loss']],
+            "accuracy": [float(h) for h in history.history['accuracy']],
+            "val_accuracy": [float(h) for h in history.history['val_accuracy']]
+        }
+
+        keras.saving.save_model(model, 'model.h5')
+        np.save('unique_labels.npy', unique_labels)
+
+        return jsonify({
+            "message": "Model trained successfully",
+            "test_loss": round(float(loss), 4),
+            "test_accuracy": round(float(accuracy), 4),
+            "num_classes": len(unique_labels),
+            "classes": unique_labels.tolist()
+        })
+
+    except Exception as e:
+        import traceback
+        return jsonify({
+            "error": str(e),
+            "traceback": traceback.format_exc()
+        }), 500
+
 
 if __name__ == '__main__':
     app.run(debug=True)

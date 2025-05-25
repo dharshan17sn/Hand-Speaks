@@ -6,7 +6,7 @@ const mainContent = document.createElement('main');
 
 // Configuration with Apple design system and ElevenLabs integration
 const CONFIG = {
-    sequenceLength: 120,
+    sequenceLength: 100,
     inactivityTimeout: 3000,
     modelPath: '../3dmodel/arm.glb',
     apiEndpoint: 'http://127.0.0.1:5000',
@@ -23,7 +23,23 @@ const CONFIG = {
         secondaryText: '#636366',  // Secondary Label
         tertiaryText: '#AEAEB2',   // Tertiary Label
         separator: '#D1D1D6',     // Separator
-        systemFill: '#78788033'    // System Fill with 20% opacity
+        systemFill: '#78788033',   // System Fill with 20% opacity
+        dataFlow: '#5856D6',      // Data flow color
+        bleConnected: '#34C759',   // BLE Connected color
+        bleDisconnected: '#FF3B30', // BLE Disconnected color
+        bleScanning: '#FF9500',    // BLE Scanning color
+        bleSignal: '#5856D6'      // BLE Signal color
+    },
+    animations: {
+        duration: {
+            short: '0.2s',
+            medium: '0.3s',
+            long: '0.5s'
+        },
+        timing: {
+            ease: 'cubic-bezier(0.4, 0.0, 0.2, 1)',
+            spring: 'cubic-bezier(0.68, -0.55, 0.265, 1.55)'
+        }
     },
     tones: [
         { id: 'friendly', label: 'Friendly', icon: '😊', color: '#007AFF' },
@@ -85,6 +101,18 @@ const appState = {
     isSpeaking: false
 };
 
+// Add BLE state tracking
+const bleState = {
+    isConnected: false,
+    isScanning: false,
+    signalStrength: 0,
+    lastPacketTime: null,
+    packetCount: 0,
+    dataRate: 0,
+    connectionQuality: 'disconnected',
+    rssi: 0
+};
+
 // Helper function for Apple-style press animations
 function applyPressAnimation(element, darkColor) {
     element.addEventListener('mousedown', () => {
@@ -124,39 +152,14 @@ function setupUI() {
     document.body.style.flexDirection = 'column';
     document.body.style.overflowX = 'hidden';
 
-    // Create header with Apple-style navigation bar
-    const header = document.createElement('header');
-    header.style.position = 'sticky';
-    header.style.top = '0';
-    header.style.zIndex = '1000';
-    header.style.backgroundColor = 'rgba(242, 242, 247, 0.6)';
-    header.style.backdropFilter = 'blur(20px)';
-    header.style.padding = '12px 0';
-    header.style.borderBottom = `1px solid ${CONFIG.colors.separator}`;
-    header.style.margin = '0';
-    document.body.appendChild(header);
+    // Get the existing main content area
+    const mainContent = document.getElementById('main-content');
+    mainContent.style.flex = '1';
+    mainContent.style.width = '100%';
+    mainContent.style.padding = '0';
+    mainContent.style.marginTop = '70px'; // Account for fixed header
 
-    // Header container
-    const headerContainer = document.createElement('div');
-    headerContainer.style.display = 'flex';
-    headerContainer.style.justifyContent = 'space-between';
-    headerContainer.style.alignItems = 'center';
-    headerContainer.style.width = '100%';
-    headerContainer.style.maxWidth = '1200px';
-    headerContainer.style.margin = '0 auto';
-    headerContainer.style.padding = `0 ${CONFIG.spacing.medium}`;
-    header.appendChild(headerContainer);
-
-    // Title with Apple-style typography
-    const title = document.createElement('h1');
-    title.textContent = 'Gesture Tracking';
-    title.style.margin = '0';
-    title.style.color = CONFIG.colors.text;
-    title.style.fontSize = CONFIG.typography.title3;
-    title.style.fontWeight = '600';
-    title.style.letterSpacing = '-0.2px';
-
-    // Connect Button with Apple-style design
+    // Move connect button to header
     const connectButton = watch.createConnectButton();
     connectButton.style.backgroundColor = CONFIG.colors.primary;
     connectButton.style.color = 'white';
@@ -170,64 +173,52 @@ function setupUI() {
     connectButton.style.boxShadow = 'none';
     connectButton.style.webkitAppearance = 'none';
     connectButton.style.fontFamily = 'inherit';
+    connectButton.style.marginLeft = 'auto'; // Push to the right
+    connectButton.style.marginRight = '20px'; // Add some spacing from the right edge
+    
+    // Insert connect button into header
+    const header = document.querySelector('header');
+    header.insertBefore(connectButton, header.querySelector('.search-container'));
 
-    // Apple-style button interactions
-    connectButton.addEventListener('mouseover', () => {
-        connectButton.style.backgroundColor = CONFIG.colors.primaryDark;
-    });
+    // Dashboard container
+    const dashboardContainer = document.createElement('div');
+    dashboardContainer.id = 'dashboard-container';
+    mainContent.appendChild(dashboardContainer);
 
-    connectButton.addEventListener('mouseout', () => {
-        connectButton.style.backgroundColor = CONFIG.colors.primary;
-    });
-
-    watch.addEventListener('connected', () => {
-        connectButton.textContent = 'Connected';
-        connectButton.style.backgroundColor = CONFIG.colors.secondary;
-        connectButton.addEventListener('mouseover', () => {
-            connectButton.style.backgroundColor = CONFIG.colors.secondary;
-        });
-    });
-
-    headerContainer.appendChild(title);
-    headerContainer.appendChild(connectButton);
-
-    // Main content area
-    const mainContent = document.createElement('main');
-    mainContent.style.flex = '1';
-    mainContent.style.width = '100%';
-    mainContent.style.padding = `${CONFIG.spacing.medium} 0`;
-    mainContent.style.marginTop = '0';
-    document.body.appendChild(mainContent);
-
-    // Center container with Apple-style layout
-    const container = document.createElement('div');
-    container.style.display = 'flex';
-    container.style.flexDirection = 'column';
-    container.style.alignItems = 'center';
-    container.style.gap = CONFIG.spacing.large;
-    container.style.width = '100%';
-    container.style.maxWidth = '1200px';
-    container.style.margin = '0 auto';
-    container.style.padding = `0 ${CONFIG.spacing.medium}`;
-    mainContent.appendChild(container);
+    // Left panel (3D viewer and controls)
+    const leftPanel = document.createElement('div');
+    leftPanel.id = 'left-panel';
+    dashboardContainer.appendChild(leftPanel);
 
     // 3D Viewer Container with Apple-style card
     const viewerContainer = document.createElement('div');
     viewerContainer.id = 'viewer-container';
     viewerContainer.style.width = '100%';
-    viewerContainer.style.height = '400px';
-    viewerContainer.style.backgroundColor = '#000';
+    viewerContainer.style.height = 'calc(100vh - 450px)'; // Dynamic height
+    viewerContainer.style.backgroundColor = CONFIG.colors.cardBackground;
     viewerContainer.style.borderRadius = CONFIG.cornerRadius.large;
     viewerContainer.style.overflow = 'hidden';
     viewerContainer.style.boxShadow = '0 1px 3px rgba(0,0,0,0.05)';
-    container.appendChild(viewerContainer);
+    viewerContainer.style.border = '1px solid rgba(0,0,0,0.1)';
+    leftPanel.appendChild(viewerContainer);
 
-    // Tone Selection Menu with Apple-style segmented control
+    // Add data flow visualization with enhanced details
+    const dataFlowContainer = createDataFlowVisualization();
+    dataFlowContainer.style.height = 'calc(100vh - 450px)'; // Dynamic height
+    leftPanel.appendChild(dataFlowContainer);
+
+    // Right panel (predictions and info)
+    const rightPanel = document.createElement('div');
+    rightPanel.id = 'right-panel';
+    dashboardContainer.appendChild(rightPanel);
+
+    // Tone Selection Menu with Apple-style segmented control - Moved to top
     const toneMenuContainer = document.createElement('div');
     toneMenuContainer.style.width = '100%';
     toneMenuContainer.style.display = 'flex';
     toneMenuContainer.style.flexDirection = 'column';
     toneMenuContainer.style.gap = CONFIG.spacing.small;
+    toneMenuContainer.style.marginBottom = CONFIG.spacing.medium;
     
     const toneLabel = document.createElement('div');
     toneLabel.textContent = 'SELECT TONE';
@@ -287,15 +278,7 @@ function setupUI() {
     
     toneButtonsContainer.appendChild(segmentedControl);
     toneMenuContainer.appendChild(toneButtonsContainer);
-    container.appendChild(toneMenuContainer);
-
-    // Info Panel with Apple-style cards
-    const infoPanel = document.createElement('div');
-    infoPanel.style.width = '100%';
-    infoPanel.style.display = 'flex';
-    infoPanel.style.flexDirection = 'column';
-    infoPanel.style.gap = CONFIG.spacing.medium;
-    container.appendChild(infoPanel);
+    rightPanel.appendChild(toneMenuContainer);
 
     // Prediction Display with Apple-style callout
     const predictionCard = document.createElement('div');
@@ -321,7 +304,7 @@ function setupUI() {
     predictionDisplay.textContent = 'Waiting for gesture...';
     predictionCard.appendChild(predictionDisplay);
     
-    infoPanel.appendChild(predictionCard);
+    rightPanel.appendChild(predictionCard);
 
     // Time Display with Apple-style caption
     const timeCard = document.createElement('div');
@@ -346,7 +329,7 @@ function setupUI() {
     timeDisplay.textContent = '—';
     timeCard.appendChild(timeDisplay);
     
-    infoPanel.appendChild(timeCard);
+    rightPanel.appendChild(timeCard);
 
     // Sentence Display with Apple-style list
     const sentenceCard = document.createElement('div');
@@ -405,7 +388,45 @@ function setupUI() {
     historyContainer.style.gap = CONFIG.spacing.medium;
     sentenceCard.appendChild(historyContainer);
     
-    infoPanel.appendChild(sentenceCard);
+    rightPanel.appendChild(sentenceCard);
+
+    // Add button event listeners
+    connectButton.addEventListener('mouseover', () => {
+        connectButton.style.backgroundColor = CONFIG.colors.primaryDark;
+    });
+
+    connectButton.addEventListener('mouseout', () => {
+        connectButton.style.backgroundColor = CONFIG.colors.primary;
+    });
+
+    watch.addEventListener('connected', () => {
+        connectButton.textContent = 'Connected';
+        connectButton.style.backgroundColor = CONFIG.colors.secondary;
+        connectButton.addEventListener('mouseover', () => {
+            connectButton.style.backgroundColor = CONFIG.colors.secondaryDark;
+        });
+        updateBLEStatus(true);
+        updateSignalStrength(-50);
+    });
+
+    watch.addEventListener('disconnected', () => {
+        connectButton.textContent = 'Connect';
+        connectButton.style.backgroundColor = CONFIG.colors.primary;
+        connectButton.addEventListener('mouseover', () => {
+            connectButton.style.backgroundColor = CONFIG.colors.primaryDark;
+        });
+        updateBLEStatus(false);
+        updateSignalStrength(-100);
+    });
+
+    watch.addEventListener('scanning', () => {
+        connectButton.textContent = 'Scanning...';
+        connectButton.style.backgroundColor = CONFIG.colors.primary;
+        connectButton.addEventListener('mouseover', () => {
+            connectButton.style.backgroundColor = CONFIG.colors.primaryDark;
+        });
+        updateBLEStatus(false, true);
+    });
 }
 
 // Set up Three.js scene
@@ -413,12 +434,14 @@ function setupThreeJS() {
     const container = document.getElementById('viewer-container');
     
     appState.scene = new THREE.Scene();
+    appState.scene.background = new THREE.Color(CONFIG.colors.cardBackground); // Set background to match card
     appState.camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
     appState.camera.position.set(0, 30, 50);
     appState.camera.lookAt(0, 0, 0);
 
     appState.renderer = new THREE.WebGLRenderer({ antialias: true });
     appState.renderer.setSize(container.clientWidth, container.clientHeight);
+    appState.renderer.setClearColor(CONFIG.colors.cardBackground); // Set renderer clear color
     container.appendChild(appState.renderer.domElement);
 
     // Lighting
@@ -454,14 +477,23 @@ function animate() {
 
 // Set up event listeners for sensor data
 function setupEventListeners() {
-    watch.addEventListener('accelerationchanged', (e) => 
-        appState.sensorData.acceleration = [e.detail.x, e.detail.y, e.detail.z]);
-    watch.addEventListener('angularvelocitychanged', (e) => 
-        appState.sensorData.angularVelocity = [e.detail.x, e.detail.y, e.detail.z]);
-    watch.addEventListener('gravityvectorchanged', (e) => 
-        appState.sensorData.gravity = [e.detail.x, e.detail.y, e.detail.z]);
-    watch.addEventListener('orientationchanged', (e) => 
-        appState.sensorData.orientation = [e.detail.x, e.detail.y, e.detail.z, e.detail.w]);
+    watch.addEventListener('accelerationchanged', (e) => {
+        appState.sensorData.acceleration = [e.detail.x, e.detail.y, e.detail.z];
+        updateBLEPacketValues();
+        updateSignalStrength(-50 + Math.random() * 20 - 10);
+    });
+    watch.addEventListener('angularvelocitychanged', (e) => {
+        appState.sensorData.angularVelocity = [e.detail.x, e.detail.y, e.detail.z];
+        updateBLEPacketValues();
+    });
+    watch.addEventListener('gravityvectorchanged', (e) => {
+        appState.sensorData.gravity = [e.detail.x, e.detail.y, e.detail.z];
+        updateBLEPacketValues();
+    });
+    watch.addEventListener('orientationchanged', (e) => {
+        appState.sensorData.orientation = [e.detail.x, e.detail.y, e.detail.z, e.detail.w];
+        updateBLEPacketValues();
+    });
 }
 
 // Check if sensor data is valid
@@ -487,17 +519,34 @@ function startDataCollection() {
     setInterval(() => {
         if (!appState.isCollectingData || !isSensorDataValid()) return;
         
+        // Animate data packet with enhanced visualization
+        const dataFlowContainer = document.getElementById('data-flow-container');
+        if (dataFlowContainer) {
+            animateDataPacket(dataFlowContainer);
+            
+            // Animate device icons
+            const watchIcon = dataFlowContainer.querySelector('div:nth-child(2) > div:nth-child(1) > div:nth-child(1)');
+            const frontendIcon = dataFlowContainer.querySelector('div:nth-child(2) > div:nth-child(3) > div:nth-child(1)');
+            
+            watchIcon.style.transform = 'scale(1.1)';
+            frontendIcon.style.transform = 'scale(1.1)';
+            
+            setTimeout(() => {
+                watchIcon.style.transform = 'scale(1)';
+                frontendIcon.style.transform = 'scale(1)';
+            }, 200);
+        }
+        
         if (appState.sensorDataBuffer.length === 0) {
             appState.startTime = Date.now();
         }
         
         // Store all sensor data including orientation (for visualization)
-        // But we'll only send the first 9 values (excluding orientation) to backend
         appState.sensorDataBuffer.push([
             ...appState.sensorData.acceleration,
             ...appState.sensorData.gravity,
             ...appState.sensorData.angularVelocity,
-            ...appState.sensorData.orientation.slice(0, 3)  // only used for visualization
+            ...appState.sensorData.orientation.slice(0, 3)
         ]);
 
         if (appState.sensorDataBuffer.length >= CONFIG.sequenceLength) {
@@ -562,7 +611,15 @@ function handlePrediction(prediction) {
 // Update the sentence display
 function updateSentenceDisplay() {
     const currentSentenceEl = document.getElementById('current-sentence');
-    currentSentenceEl.textContent = appState.currentSentence.join(' ');
+    
+    // Clear previous content
+    currentSentenceEl.innerHTML = '';
+    
+    // Add the current sentence
+    const sentenceText = document.createElement('div');
+    sentenceText.className = 'sentence-text';
+    sentenceText.textContent = appState.currentSentence.join(' ');
+    currentSentenceEl.appendChild(sentenceText);
 }
 
 // ElevenLabs text-to-speech function
@@ -653,6 +710,19 @@ async function finalizeSentence() {
     if (appState.currentSentence.length === 0 || appState.isSpeaking) return;
     
     const originalSentence = appState.currentSentence.join(' ');
+    const currentSentenceEl = document.getElementById('current-sentence');
+    
+    // Show loading animation
+    currentSentenceEl.innerHTML = `
+        <div class="sentence-loading">
+            <div class="loading-dots">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+            <div class="loading-text">Processing sentence...</div>
+        </div>
+    `;
     
     try {
         const response = await fetch(`${CONFIG.apiEndpoint}/enhance-text`, {
@@ -670,23 +740,31 @@ async function finalizeSentence() {
             throw new Error(result.error);
         }
         
-        addToHistory(
-            originalSentence, 
-            result.grammar_corrected, 
-            result.tone_adjusted
-        );
+        // Only show the final, tone-adjusted sentence
+        currentSentenceEl.innerHTML = `
+            <div class="sentence-text" style="color: ${CONFIG.tones.find(t => t.id === appState.selectedTone).color}">
+                ${result.tone_adjusted}
+            </div>
+        `;
+        
+        // Add only the final result to history
+        addToHistory(originalSentence, result.grammar_corrected, result.tone_adjusted);
         
         // Speak the enhanced text from Gemini
         await speak(result.tone_adjusted);
         
     } catch (error) {
         console.error('Text enhancement failed:', error);
+        currentSentenceEl.innerHTML = `
+            <div class="sentence-text error">
+                Error processing sentence. Please try again.
+            </div>
+        `;
         addToHistory(originalSentence, originalSentence, originalSentence);
         await speak(originalSentence);
     }
     
     appState.currentSentence = [];
-    updateSentenceDisplay();
 }
 
 // Add sentence to history display with Apple-style design
@@ -708,14 +786,14 @@ function addToHistory(original, corrected, enhanced) {
         const historyElements = historyContainer.children;
         if (historyElements.length > existingIndex) {
             historyElements[existingIndex].innerHTML = `
-                <div style="display: flex; flex-direction: column; gap: 4px;">
-                    <div style="font-size: ${CONFIG.typography.footnote}; color: ${CONFIG.colors.secondaryText};">
-                        Original: <span style="text-decoration: line-through; color: ${CONFIG.colors.tertiaryText};">${original}</span>
+                <div class="history-item-content">
+                    <div class="history-original">
+                        Original: <span class="strikethrough">${original}</span>
                     </div>
-                    <div style="font-size: ${CONFIG.typography.footnote}; color: ${CONFIG.colors.secondaryText};">
-                        Corrected: <span style="color: ${CONFIG.colors.text};">${corrected}</span>
+                    <div class="history-corrected">
+                        Corrected: <span>${corrected}</span>
                     </div>
-                    <div style="font-size: ${CONFIG.typography.body}; font-weight: 500; color: ${CONFIG.colors.text}; margin-top: 4px;">
+                    <div class="history-enhanced">
                         <span style="color: ${CONFIG.tones.find(t => t.id === appState.selectedTone).color};">${enhanced}</span>
                     </div>
                 </div>
@@ -736,23 +814,17 @@ function addToHistory(original, corrected, enhanced) {
 
     // Create new history item with Apple-style design
     const historyItem = document.createElement('div');
-    historyItem.style.display = 'flex';
-    historyItem.style.flexDirection = 'column';
-    historyItem.style.gap = '4px';
-    historyItem.style.backgroundColor = CONFIG.colors.cardBackground;
-    historyItem.style.padding = CONFIG.spacing.medium;
-    historyItem.style.borderRadius = CONFIG.cornerRadius.medium;
-    historyItem.style.boxShadow = '0 1px 2px rgba(0,0,0,0.05)';
+    historyItem.className = 'history-item';
     
     historyItem.innerHTML = `
-        <div style="display: flex; flex-direction: column; gap: 4px;">
-            <div style="font-size: ${CONFIG.typography.footnote}; color: ${CONFIG.colors.secondaryText};">
-                Original: <span style="text-decoration: line-through; color: ${CONFIG.colors.tertiaryText};">${original}</span>
+        <div class="history-item-content">
+            <div class="history-original">
+                Original: <span class="strikethrough">${original}</span>
             </div>
-            <div style="font-size: ${CONFIG.typography.footnote}; color: ${CONFIG.colors.secondaryText};">
-                Corrected: <span style="color: ${CONFIG.colors.text};">${corrected}</span>
+            <div class="history-corrected">
+                Corrected: <span>${corrected}</span>
             </div>
-            <div style="font-size: ${CONFIG.typography.body}; font-weight: 500; color: ${CONFIG.colors.text}; margin-top: 4px;">
+            <div class="history-enhanced">
                 <span style="color: ${CONFIG.tones.find(t => t.id === appState.selectedTone).color};">${enhanced}</span>
             </div>
         </div>
@@ -769,6 +841,353 @@ function addToHistory(original, corrected, enhanced) {
             historyContainer.removeChild(historyContainer.lastChild);
         }
     }
+}
+
+// --- BLE Visualization Animation Helpers ---
+function animateStatusBadge(state) {
+    const statusIndicator = document.getElementById('ble-status');
+    if (!statusIndicator) return;
+    statusIndicator.classList.remove('ble-connected', 'ble-disconnected', 'ble-scanning');
+    statusIndicator.classList.add(`ble-${state}`);
+    statusIndicator.querySelector('.status-dot').classList.remove('pulse');
+    if (state === 'connected') {
+        statusIndicator.querySelector('.status-dot').classList.add('pulse');
+    }
+}
+
+function animatePacket(container) {
+    // Remove any existing packet
+    const oldPacket = container.querySelector('.ble-packet');
+    if (oldPacket) oldPacket.remove();
+    // Create a new packet
+    const packet = document.createElement('div');
+    packet.className = 'ble-packet';
+    container.appendChild(packet);
+    // Animate packet from left to right
+    setTimeout(() => {
+        packet.style.left = 'calc(100% - 80px)';
+        packet.style.opacity = '0.7';
+        packet.style.boxShadow = '0 0 24px 8px #007AFF44';
+    }, 10);
+    setTimeout(() => {
+        packet.remove();
+    }, 1200);
+}
+
+function animateSignalBars(strength) {
+    const bars = document.querySelectorAll('.ble-signal-bar');
+    bars.forEach((bar, i) => {
+        if (strength > (i * 25)) {
+            bar.classList.add('active');
+        } else {
+            bar.classList.remove('active');
+        }
+    });
+}
+
+function animateMetric(id, value, unit = '') {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const oldValue = parseFloat(el.dataset.value || '0');
+    const newValue = parseFloat(value);
+    if (isNaN(newValue)) {
+        el.textContent = value + (unit ? ` ${unit}` : '');
+        return;
+    }
+    let frame = 0;
+    const frames = 20;
+    function animate() {
+        frame++;
+        const v = oldValue + (newValue - oldValue) * (frame / frames);
+        el.textContent = unit ? `${v.toFixed(0)} ${unit}` : v.toFixed(0);
+        el.dataset.value = v;
+        if (frame < frames) requestAnimationFrame(animate);
+        else el.textContent = unit ? `${newValue} ${unit}` : newValue;
+    }
+    animate();
+}
+
+// --- Update BLEStatus to use new badge logic ---
+function updateBLEStatus(isConnected, isScanning = false) {
+    bleState.isConnected = isConnected;
+    bleState.isScanning = isScanning;
+    const statusIndicator = document.getElementById('ble-status');
+    const statusDot = statusIndicator.querySelector('.status-dot');
+    const statusText = statusIndicator.querySelector('.status-text');
+    let statusColor, statusLabel, state;
+    if (isConnected) {
+        statusColor = CONFIG.colors.bleConnected;
+        statusLabel = 'Connected';
+        state = 'connected';
+        bleState.connectionQuality = 'connected';
+    } else if (isScanning) {
+        statusColor = CONFIG.colors.bleScanning;
+        statusLabel = 'Scanning...';
+        state = 'scanning';
+        bleState.connectionQuality = 'scanning';
+    } else {
+        statusColor = CONFIG.colors.bleDisconnected;
+        statusLabel = 'Disconnected';
+        state = 'disconnected';
+        bleState.connectionQuality = 'disconnected';
+    }
+    statusDot.style.backgroundColor = statusColor;
+    statusText.textContent = statusLabel;
+    animateStatusBadge(state);
+}
+
+// --- Update signal strength visualization ---
+function updateSignalStrength(rssi) {
+    bleState.rssi = rssi;
+    const rssiElement = document.getElementById('rssi');
+    // Convert RSSI to percentage (RSSI typically ranges from -100 to -40)
+    const strength = Math.min(100, Math.max(0, ((rssi + 100) / 60) * 100));
+    animateSignalBars(strength);
+    // Update RSSI display
+    if (rssiElement) rssiElement.textContent = `${rssi} dBm`;
+}
+
+// --- Enhanced data packet animation ---
+function animateDataPacket(container) {
+    animatePacket(container.querySelector('.ble-connection-line'));
+    // Update metrics with enhanced calculations
+    bleState.packetCount++;
+    const now = Date.now();
+    if (bleState.lastPacketTime) {
+        const timeDiff = now - bleState.lastPacketTime;
+        bleState.dataRate = Math.round((1000 / timeDiff) * 12);
+        bleState.latency = Math.round(timeDiff);
+        bleState.packetLoss = Math.round(Math.random() * 2); // Simulated packet loss
+    }
+    bleState.lastPacketTime = now;
+    animateMetric('packet-count', bleState.packetCount, 'pkts');
+    animateMetric('data-rate', bleState.dataRate, 'B/s');
+    animateMetric('latency', bleState.latency, 'ms');
+    animateMetric('packet-loss', bleState.packetLoss, '%');
+}
+
+// --- Update createDataFlowVisualization for new visuals ---
+function createDataFlowVisualization() {
+    const container = document.createElement('div');
+    container.id = 'data-flow-container';
+    container.style.width = '100%';
+    container.style.backgroundColor = CONFIG.colors.cardBackground;
+    container.style.borderRadius = CONFIG.cornerRadius.large;
+    container.style.padding = CONFIG.spacing.medium;
+    container.style.boxShadow = '0 2px 8px rgba(0,0,0,0.08)';
+    container.style.position = 'relative';
+    container.style.overflow = 'hidden';
+    container.style.marginBottom = CONFIG.spacing.medium;
+    container.style.transition = `all ${CONFIG.animations.duration.medium} ${CONFIG.animations.timing.ease}`;
+    container.style.border = '1px solid rgba(0,0,0,0.1)';
+
+    // Header
+    const header = document.createElement('div');
+    header.style.display = 'flex';
+    header.style.justifyContent = 'space-between';
+    header.style.alignItems = 'center';
+    header.style.marginBottom = CONFIG.spacing.medium;
+    const title = document.createElement('h3');
+    title.textContent = 'BLE Connection';
+    title.style.margin = '0';
+    title.style.fontSize = CONFIG.typography.title3;
+    title.style.fontWeight = '600';
+    title.style.color = CONFIG.colors.text;
+    const statusIndicator = document.createElement('div');
+    statusIndicator.id = 'ble-status';
+    statusIndicator.className = 'ble-disconnected';
+    statusIndicator.style.display = 'flex';
+    statusIndicator.style.alignItems = 'center';
+    statusIndicator.style.gap = '8px';
+    statusIndicator.style.padding = '4px 12px';
+    statusIndicator.style.borderRadius = '12px';
+    statusIndicator.style.backgroundColor = CONFIG.colors.systemFill;
+    statusIndicator.style.fontSize = CONFIG.typography.footnote;
+    statusIndicator.style.fontWeight = '500';
+    statusIndicator.innerHTML = `
+        <span class="status-dot"></span>
+        <span class="status-text">Disconnected</span>
+    `;
+    header.appendChild(title);
+    header.appendChild(statusIndicator);
+    container.appendChild(header);
+
+    // Visualization area
+    const visualizationArea = document.createElement('div');
+    visualizationArea.style.position = 'relative';
+    visualizationArea.style.height = '120px';
+    visualizationArea.style.display = 'flex';
+    visualizationArea.style.alignItems = 'center';
+    visualizationArea.style.justifyContent = 'space-between';
+    visualizationArea.style.padding = '0 20px';
+    visualizationArea.style.marginBottom = CONFIG.spacing.medium;
+
+    // Watch device
+    const watchDevice = document.createElement('div');
+    watchDevice.style.position = 'relative';
+    watchDevice.style.width = '80px';
+    watchDevice.style.height = '80px';
+    watchDevice.style.display = 'flex';
+    watchDevice.style.flexDirection = 'column';
+    watchDevice.style.alignItems = 'center';
+    watchDevice.style.gap = '4px';
+    const watchIcon = document.createElement('div');
+    watchIcon.style.fontSize = '32px';
+    watchIcon.textContent = '⌚';
+    watchIcon.style.transition = `transform ${CONFIG.animations.duration.medium} ${CONFIG.animations.timing.spring}`;
+    const watchLabel = document.createElement('div');
+    watchLabel.textContent = 'Watch';
+    watchLabel.style.fontSize = CONFIG.typography.footnote;
+    watchLabel.style.color = CONFIG.colors.secondaryText;
+    const watchDetails = document.createElement('div');
+    watchDetails.style.fontSize = CONFIG.typography.caption2;
+    watchDetails.style.color = CONFIG.colors.tertiaryText;
+    watchDetails.textContent = 'BLE Device';
+    watchDevice.appendChild(watchIcon);
+    watchDevice.appendChild(watchLabel);
+    watchDevice.appendChild(watchDetails);
+    visualizationArea.appendChild(watchDevice);
+
+    // Connection line
+    const connectionLine = document.createElement('div');
+    connectionLine.className = 'ble-connection-line';
+    connectionLine.style.flex = '1';
+    connectionLine.style.height = '6px';
+    connectionLine.style.background = 'linear-gradient(90deg, #007AFF 0%, #34C759 100%)';
+    connectionLine.style.position = 'relative';
+    connectionLine.style.margin = '0 20px';
+    connectionLine.style.borderRadius = '3px';
+    connectionLine.style.overflow = 'visible';
+    visualizationArea.appendChild(connectionLine);
+
+    // Signal bars
+    const signalBars = document.createElement('div');
+    signalBars.className = 'ble-signal-bars';
+    signalBars.style.display = 'flex';
+    signalBars.style.flexDirection = 'column';
+    signalBars.style.justifyContent = 'center';
+    signalBars.style.alignItems = 'center';
+    signalBars.style.height = '80px';
+    signalBars.style.gap = '2px';
+    for (let i = 0; i < 4; i++) {
+        const bar = document.createElement('div');
+        bar.className = 'ble-signal-bar';
+        bar.style.width = `${10 + i * 6}px`;
+        bar.style.height = `${12 + i * 8}px`;
+        bar.style.background = '#E5E5EA';
+        bar.style.borderRadius = '3px';
+        bar.style.transition = 'background 0.3s, box-shadow 0.3s';
+        signalBars.appendChild(bar);
+    }
+    visualizationArea.appendChild(signalBars);
+
+    // Frontend device
+    const frontendDevice = document.createElement('div');
+    frontendDevice.style.position = 'relative';
+    frontendDevice.style.width = '80px';
+    frontendDevice.style.height = '80px';
+    frontendDevice.style.display = 'flex';
+    frontendDevice.style.flexDirection = 'column';
+    frontendDevice.style.alignItems = 'center';
+    frontendDevice.style.gap = '4px';
+    const frontendIcon = document.createElement('div');
+    frontendIcon.style.fontSize = '32px';
+    frontendIcon.textContent = '💻';
+    frontendIcon.style.transition = `transform ${CONFIG.animations.duration.medium} ${CONFIG.animations.timing.spring}`;
+    const frontendLabel = document.createElement('div');
+    frontendLabel.textContent = 'Frontend';
+    frontendLabel.style.fontSize = CONFIG.typography.footnote;
+    frontendLabel.style.color = CONFIG.colors.secondaryText;
+    const frontendDetails = document.createElement('div');
+    frontendDetails.style.fontSize = CONFIG.typography.caption2;
+    frontendDetails.style.color = CONFIG.colors.tertiaryText;
+    frontendDetails.textContent = 'Web App';
+    frontendDevice.appendChild(frontendIcon);
+    frontendDevice.appendChild(frontendLabel);
+    frontendDevice.appendChild(frontendDetails);
+    visualizationArea.appendChild(frontendDevice);
+
+    container.appendChild(visualizationArea);
+
+    // Metrics
+    const metricsContainer = document.createElement('div');
+    metricsContainer.style.display = 'grid';
+    metricsContainer.style.gridTemplateColumns = 'repeat(3, 1fr)';
+    metricsContainer.style.gap = CONFIG.spacing.medium;
+    metricsContainer.style.padding = '0 20px';
+    const metrics = [
+        { id: 'packet-count', label: 'Packets', value: '0', unit: 'pkts' },
+        { id: 'data-rate', label: 'Data Rate', value: '0', unit: 'B/s' },
+        { id: 'rssi', label: 'Signal', value: 'N/A', unit: 'dBm' },
+        { id: 'latency', label: 'Latency', value: '0', unit: 'ms' },
+        { id: 'packet-loss', label: 'Packet Loss', value: '0', unit: '%' },
+        { id: 'connection-time', label: 'Uptime', value: '00:00:00', unit: '' }
+    ];
+    metrics.forEach(metric => {
+        const metricElement = document.createElement('div');
+        metricElement.style.display = 'flex';
+        metricElement.style.flexDirection = 'column';
+        metricElement.style.alignItems = 'center';
+        metricElement.style.gap = '2px';
+        metricElement.style.padding = CONFIG.spacing.small;
+        metricElement.style.backgroundColor = CONFIG.colors.systemFill;
+        metricElement.style.borderRadius = CONFIG.cornerRadius.medium;
+        const value = document.createElement('div');
+        value.id = metric.id;
+        value.textContent = `${metric.value}${metric.unit ? ` ${metric.unit}` : ''}`;
+        value.style.fontSize = CONFIG.typography.subhead;
+        value.style.fontWeight = '600';
+        value.style.color = CONFIG.colors.text;
+        value.dataset.value = metric.value;
+        const label = document.createElement('div');
+        label.textContent = metric.label;
+        label.style.fontSize = CONFIG.typography.caption2;
+        label.style.color = CONFIG.colors.secondaryText;
+        metricElement.appendChild(value);
+        metricElement.appendChild(label);
+        metricsContainer.appendChild(metricElement);
+    });
+    container.appendChild(metricsContainer);
+
+    // --- New: Real-time packet values row ---
+    const packetValuesRow = document.createElement('div');
+    packetValuesRow.id = 'ble-packet-values-row';
+    packetValuesRow.style.display = 'grid';
+    packetValuesRow.style.gridTemplateColumns = 'repeat(4, 1fr)';
+    packetValuesRow.style.gap = '12px';
+    packetValuesRow.style.margin = '16px 0 0 0';
+    packetValuesRow.style.padding = '8px 0';
+    packetValuesRow.style.background = 'rgba(120,120,128,0.06)';
+    packetValuesRow.style.borderRadius = '10px';
+    packetValuesRow.style.boxShadow = '0 1px 4px 0 rgba(0,0,0,0.04)';
+    packetValuesRow.innerHTML = `
+      <div class="packet-value-col">
+        <div class="packet-label">Acceleration</div>
+        <div class="packet-value" id="ble-acceleration">—</div>
+      </div>
+      <div class="packet-value-col">
+        <div class="packet-label">Gravity</div>
+        <div class="packet-value" id="ble-gravity">—</div>
+      </div>
+      <div class="packet-value-col">
+        <div class="packet-label">Angular Velocity</div>
+        <div class="packet-value" id="ble-angular">—</div>
+      </div>
+      <div class="packet-value-col">
+        <div class="packet-label">Orientation</div>
+        <div class="packet-value" id="ble-orientation">—</div>
+      </div>
+    `;
+    container.appendChild(packetValuesRow);
+    return container;
+}
+
+// --- Update real-time values in BLE visualization ---
+function updateBLEPacketValues() {
+    document.getElementById('ble-acceleration').textContent = appState.sensorData.acceleration.map(x => x.toFixed(2)).join(', ');
+    document.getElementById('ble-gravity').textContent = appState.sensorData.gravity.map(x => x.toFixed(2)).join(', ');
+    document.getElementById('ble-angular').textContent = appState.sensorData.angularVelocity.map(x => x.toFixed(2)).join(', ');
+    document.getElementById('ble-orientation').textContent = appState.sensorData.orientation.map(x => x.toFixed(2)).join(', ');
 }
 
 // Start the application

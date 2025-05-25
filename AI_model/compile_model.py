@@ -8,10 +8,16 @@ from tensorflow.keras.layers import LSTM, Dense, Dropout
 from tensorflow.keras.utils import to_categorical
 
 # Load your dataset
-data = pd.read_csv('AI_model/sensor_r.csv')  # Replace with your actual file path
+data = pd.read_csv('sensor.csv')  # Replace with your actual file path
+
+# Define which columns to use (excluding orientation)
+feature_columns = [
+    'Acceleration_x', 'Acceleration_y', 'Acceleration_z',
+    'Gravity_x', 'Gravity_y', 'Gravity_z',
+    'Angular Velocity_x', 'Angular Velocity_y', 'Angular Velocity_z'
+]
 
 # Step 1: Segment data into sequences
-# Assuming each segment lasts 3 seconds with a specific number of samples per segment
 sequence_length = 100  # Adjust based on your data
 segments = []
 
@@ -19,8 +25,8 @@ segments = []
 for id_, group in data.groupby('ID'):
     # Extract the gesture label
     label = group['Character'].iloc[0]
-    # Convert the group to numpy array and reshape
-    samples = group.iloc[:, 2:-1].values  # Select all columns except 'ID' and 'Character'
+    # Select only acceleration, gravity, and angular velocity features
+    samples = group[feature_columns].values
     # Create segments of specified length
     for start in range(0, len(samples) - sequence_length + 1):
         segment = samples[start:start + sequence_length]
@@ -40,32 +46,33 @@ y_categorical = to_categorical(y_encoded)  # Convert to one-hot encoding
 # Step 4: Split data into training and testing sets
 X_train, X_test, y_train, y_test = train_test_split(X, y_categorical, test_size=0.2, random_state=42)
 
+print(f"Input shape: {X_train.shape}")  # Should show (samples, 100, 9)
+print(f"Number of classes: {len(unique_labels)}")
+print(f"Classes: {unique_labels}")
+
 # Step 5: Build the LSTM model
 model = Sequential()
-model.add(LSTM(64, return_sequences=True, input_shape=(X_train.shape[1], X_train.shape[2])))
+model.add(LSTM(64, return_sequences=True, input_shape=(sequence_length, 9)))  # 9 features
 model.add(Dropout(0.2))
 model.add(LSTM(64))
 model.add(Dropout(0.2))
-model.add(Dense(len(unique_labels), activation='softmax'))  # Adjust the number of outputs
+model.add(Dense(len(unique_labels), activation='softmax'))
 
 # Step 6: Compile the model
 model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
 
 # Step 7: Train the model
-history=model.fit(X_train, y_train, epochs=8, batch_size=32, validation_data=(X_test, y_test))
+history = model.fit(X_train, y_train, epochs=8, batch_size=32, validation_data=(X_test, y_test))
 
 # Step 8: Evaluate the model
 loss, accuracy = model.evaluate(X_test, y_test)
 print(f'Test Loss: {loss:.4f}, Test Accuracy: {accuracy:.4f}')
-keras.saving.save_model(model, 'AI_model/model.h5')
 
-import matplotlib.pyplot as plt
-# Extracting metrics
-loss = history.history['loss']
-val_loss = history.history['val_loss']
-accuracy = history.history.get('accuracy')  # Optional, if accuracy is tracked
-val_accuracy = history.history.get('val_accuracy')  # Optional, if accuracy is tracked
-epochs = range(1, len(loss) + 1)
+# Save the model and the unique labels
+keras.saving.save_model(model, 'model.h5')
+np.save('unique_labels.npy', unique_labels)
+
+# Plotting
 import matplotlib.pyplot as plt
 
 # Extract metrics

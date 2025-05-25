@@ -16,27 +16,30 @@
     </script>
 </head>
 <body>
-    <header>
-        <a href="#" class="logo" id="logo">HANDSPEAKS</a>
-        <nav>
-            <ul class="navigation">
-                <li><a href="index.html">Home</a></li>
-                <li><a href="training.html">Training</a></li>
-                <li><a href="trck.html" class="active">Tracking</a></li>
-                <li><a href="tutorials.html">Tutorials</a></li>
-                <li><a href="team.html">Our Team</a></li>
-            </ul>
-        </nav>
-        <div class="search-container">
-            <input type="text" placeholder="Search..." class="search-input">
-            <button class="search-button">
-                <ion-icon name="search-outline"></ion-icon>
-            </button>
-        </div>
-        <div id="connect-button-container"></div> <!-- Add this container for the connection button -->
-    </header>
+    <div class="page-wrapper">
+        <header>
+            <a href="#" class="logo" id="logo">HANDSPEAKS</a>
+            <nav>
+                <ul class="navigation">
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="training.html">Training</a></li>
+                    <li><a href="trck.html" class="active">Tracking</a></li>
+                    <li><a href="tutorials.html">Tutorials</a></li>
+                    <li><a href="team.html">Our Team</a></li>
+                </ul>
+            </nav>
+            <div class="search-container">
+                <input type="text" placeholder="Search..." class="search-input">
+                <button class="search-button">
+                    <ion-icon name="search-outline"></ion-icon>
+                </button>
+            </div>
+        </header>
 
-    <main id="main-content"></main> <!-- Main content container -->
+        <div class="content-wrapper">
+            <main id="main-content"></main>
+        </div>
+    </div>
 
     <script>
         const logo = document.getElementById('logo');

@@ -6,6 +6,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Training - Handspeaks</title>
     <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/touch-sdk@0.5.2/dist/main.js"></script>
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.150.0/build/three.module.js",
+                "GLTFLoader": "https://cdn.jsdelivr.net/npm/three@0.150.0/examples/jsm/loaders/GLTFLoader.js"
+            }
+        }
+    </script>
 </head>
 
 <body>
@@ -29,15 +38,94 @@
     </header>
 
     <main>
-        <section class="project-details">
-            <h2>Training</h2>
-            <p>Train your model to recognize gestures efficiently using our interactive training tools.</p>
-            <p class="service-unavailable" style="font-weight: bold; color: red; font-size: 1.2em;">Sorry, currently
-                service is not available.</p>
+        <section class="training-container">
+            <h2>Gesture Training</h2>
+            <p>Record and train your gestures using our interactive training tools.</p>
+            
+            <div class="training-controls">
+                <div class="control-section record-section">
+                    <div class="input-group">
+                        <label for="gesture-id">Gesture ID:</label>
+                        <input type="number" id="gesture-id" value="235" min="1">
+                    </div>
+                    <div class="input-group">
+                        <label for="class-label">Class Label:</label>
+                        <input type="text" id="class-label" placeholder="Enter gesture label">
+                    </div>
+                </div>
+
+                <div class="control-section record-button-section">
+                    <button id="record-button" class="record-button">Start Recording</button>
+                    <div id="recording-status" class="recording-status"></div>
+                    <div class="row-count-display">
+                        <span>Total Records: </span>
+                        <span id="row-count">0</span>
+                    </div>
+                </div>
+
+                <div class="control-section save-section">
+                    <button id="save-button" class="control-button primary">Save Recorded Data</button>
+                    <button id="clear-button" class="control-button warning">Clear Data</button>
+                </div>
+
+                <div class="control-section delete-section">
+                    <h3>Delete Records</h3>
+                    <div class="delete-controls-grid">
+                        <div class="delete-group">
+                            <label for="delete-id">Delete by ID:</label>
+                            <div class="delete-input-group">
+                                <input type="number" id="delete-id" placeholder="Enter ID" min="1">
+                                <button id="delete-by-id" class="control-button delete">Delete</button>
+                            </div>
+                        </div>
+                        <div class="delete-group">
+                            <label for="delete-label">Delete by Label:</label>
+                            <div class="delete-input-group">
+                                <input type="text" id="delete-label" placeholder="Enter label">
+                                <button id="delete-by-label" class="control-button delete">Delete</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="operation-status" class="operation-status"></div>
+            </div>
+
+            <div class="visualization-container">
+                <div id="viewer-container" class="viewer-container"></div>
+                <div id="data-flow-container" class="data-flow-container"></div>
+            </div>
+
+            <div class="sensor-data-display">
+                <h3>Sensor Data</h3>
+                <div class="sensor-values">
+                    <div class="sensor-group">
+                        <h4>Acceleration</h4>
+                        <div id="acceleration-values">—</div>
+                    </div>
+                    <div class="sensor-group">
+                        <h4>Gravity</h4>
+                        <div id="gravity-values">—</div>
+                    </div>
+                    <div class="sensor-group">
+                        <h4>Angular Velocity</h4>
+                        <div id="angular-values">—</div>
+                    </div>
+                    <div class="sensor-group">
+                        <h4>Orientation</h4>
+                        <div id="orientation-values">—</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="csv-display">
+                <h3>Recorded Data</h3>
+                <div id="csv-content" class="csv-content"></div>
+            </div>
         </section>
     </main>
 
-    <script src="script.js"></script>
+    <script type="module" src="training.js"></script>
     <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
     <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
 </body>
