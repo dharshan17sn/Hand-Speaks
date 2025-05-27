@@ -569,3 +569,279 @@ document.addEventListener('DOMContentLoaded', () => {
         deleteRows('label', label);
     });
 }); 
+// Add training button listener
+const trainButton = document.getElementById('train-button');
+const trainingStatus = document.getElementById('training-status');
+if (trainButton) {
+    trainButton.addEventListener('click', async () => {
+        trainButton.disabled = true;
+
+        // Create or show loading spinner
+        let spinner = document.getElementById('loading-spinner');
+        if (!spinner) {
+            spinner = document.createElement('div');
+            spinner.id = 'loading-spinner';
+            spinner.style.cssText = `
+                border: 4px solid #f3f3f3;
+                border-top: 4px solid #3498db;
+                border-radius: 50%;
+                width: 24px;
+                height: 24px;
+                animation: spin 1s linear infinite;
+                display: inline-block;
+                margin-left: 10px;
+                vertical-align: middle;
+            `;
+            trainingStatus.parentNode.insertBefore(spinner, trainingStatus.nextSibling);
+        }
+        spinner.style.display = 'inline-block';
+
+        trainingStatus.textContent = 'Training started...';
+        trainingStatus.style.color = 'blue';
+
+        const metricsSection = document.getElementById('training-metrics');
+        if (metricsSection) metricsSection.style.display = 'none';
+
+        const epochs = parseInt(document.getElementById('epochs')?.value) || 10;
+        const batchSize = parseInt(document.getElementById('batch-size')?.value) || 32;
+
+        try {
+            const response = await fetch('http://localhost:5000/train-model', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    epochs: epochs,
+                    batch_size: batchSize,
+                    // learning_rate: learningRate  // if you add this later
+                })
+            });
+
+            const data = await response.json();
+
+            if (response.ok && data.status === 'completed') {
+                trainingStatus.textContent = 'Training completed successfully!';
+                trainingStatus.style.color = 'green';
+
+                if (metricsSection) metricsSection.style.display = 'block';
+
+                // 1. Loss Chart (train + val)
+                if (data.loss && data.val_loss) {
+                    const ctxLoss = document.getElementById('lossChart').getContext('2d');
+                    if (window.lossChart && typeof window.lossChart.destroy === 'function') {
+                        window.lossChart.destroy();
+                    }
+                    window.lossChart = new Chart(ctxLoss, {
+                        type: 'line',
+                        data: {
+                            labels: data.loss.map((_, i) => i + 1),
+                            datasets: [
+                                {
+                                    label: 'Training Loss',
+                                    data: data.loss,
+                                    borderColor: 'red',
+                                    fill: false,
+                                    tension: 0.1
+                                },
+                                {
+                                    label: 'Validation Loss',
+                                    data: data.val_loss,
+                                    borderColor: 'orange',
+                                    fill: false,
+                                    tension: 0.1
+                                }
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            scales: {
+                                x: { title: { display: true, text: 'Epoch' } },
+                                y: { title: { display: true, text: 'Loss' }, beginAtZero: true }
+                            }
+                        }
+                    });
+                }
+
+                // 2. Accuracy Chart (train + val)
+                if (data.accuracy && data.val_accuracy) {
+                    const ctxAcc = document.getElementById('accuracyChart').getContext('2d');
+                    if (window.accuracyChart && typeof window.accuracyChart.destroy === 'function') {
+                        window.accuracyChart.destroy();
+                    }
+                    window.accuracyChart = new Chart(ctxAcc, {
+                        type: 'line',
+                        data: {
+                            labels: data.accuracy.map((_, i) => i + 1),
+                            datasets: [
+                                {
+                                    label: 'Training Accuracy',
+                                    data: data.accuracy,
+                                    borderColor: 'green',
+                                    fill: false,
+                                    tension: 0.1
+                                },
+                                {
+                                    label: 'Validation Accuracy',
+                                    data: data.val_accuracy,
+                                    borderColor: 'limegreen',
+                                    fill: false,
+                                    tension: 0.1
+                                }
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            scales: {
+                                x: { title: { display: true, text: 'Epoch' } },
+                                y: { title: { display: true, text: 'Accuracy' }, beginAtZero: true, max: 1 }
+                            }
+                        }
+                    });
+                }
+
+                // 3. Confusion Matrix (table + heatmap)
+                if (data.confusion_matrix && data.class_labels) {
+                    const cmCanvas = document.getElementById('confusionMatrixChart');
+                    if (cmCanvas) {
+                        const ctx = cmCanvas.getContext('2d');
+                        ctx.clearRect(0, 0, cmCanvas.width, cmCanvas.height);
+                    }
+
+                    let existingTable = document.getElementById('confusionMatrixTable');
+                    if (existingTable) existingTable.remove();
+
+                    const cmContainer = cmCanvas.parentElement;
+                    const table = document.createElement('table');
+                    table.id = 'confusionMatrixTable';
+                    table.style.borderCollapse = 'collapse';
+                    table.style.width = '100%';
+                    table.style.marginTop = '10px';
+
+                    // Header row
+                    let thead = document.createElement('thead');
+                    let headerRow = document.createElement('tr');
+                    let emptyHeader = document.createElement('th');
+                    emptyHeader.textContent = '';
+                    headerRow.appendChild(emptyHeader);
+                    data.class_labels.forEach(label => {
+                        let th = document.createElement('th');
+                        th.textContent = label;
+                        th.style.border = '1px solid #ddd';
+                        th.style.padding = '5px';
+                        headerRow.appendChild(th);
+                    });
+                    thead.appendChild(headerRow);
+                    table.appendChild(thead);
+
+                    // Body rows
+                    let tbody = document.createElement('tbody');
+                    data.confusion_matrix.forEach((row, i) => {
+                        let tr = document.createElement('tr');
+                        let rowHeader = document.createElement('th');
+                        rowHeader.textContent = data.class_labels[i];
+                        rowHeader.style.border = '1px solid #ddd';
+                        rowHeader.style.padding = '5px';
+                        tr.appendChild(rowHeader);
+
+                        row.forEach(value => {
+                            let td = document.createElement('td');
+                            td.textContent = value;
+                            td.style.border = '1px solid #ddd';
+                            td.style.padding = '5px';
+
+                            // Heatmap coloring (red-green scale)
+                            let maxVal = Math.max(...row);
+                            let intensity = maxVal ? value / maxVal : 0;
+                            let red = Math.floor(255 * intensity);
+                            let green = 255 - red;
+                            td.style.backgroundColor = `rgba(${red}, ${green}, 0, 0.3)`;
+
+                            tr.appendChild(td);
+                        });
+                        tbody.appendChild(tr);
+                    });
+                    table.appendChild(tbody);
+                    cmContainer.appendChild(table);
+                }
+
+                // 4. Class Labels list
+                if (data.class_labels) {
+                    const classListUl = document.getElementById('classList');
+                    classListUl.innerHTML = '';
+                    data.class_labels.forEach(label => {
+                        const li = document.createElement('li');
+                        li.textContent = label;
+                        classListUl.appendChild(li);
+                    });
+                }
+
+                // 5. Precision/Recall/F1 Table
+                if (data.prf_per_class) {
+                    const prfTableBody = document.getElementById('prfTableBody');
+                    if (prfTableBody) {
+                        prfTableBody.innerHTML = '';
+                        Object.entries(data.prf_per_class).forEach(([label, metrics]) => {
+                            const tr = document.createElement('tr');
+
+                            const tdLabel = document.createElement('td');
+                            tdLabel.textContent = label;
+                            tr.appendChild(tdLabel);
+
+                            const tdPrecision = document.createElement('td');
+                            tdPrecision.textContent = (metrics.precision * 100).toFixed(2) + '%';
+                            tr.appendChild(tdPrecision);
+
+                            const tdRecall = document.createElement('td');
+                            tdRecall.textContent = (metrics.recall * 100).toFixed(2) + '%';
+                            tr.appendChild(tdRecall);
+
+                            const tdF1 = document.createElement('td');
+                            tdF1.textContent = (metrics.f1_score * 100).toFixed(2) + '%';
+                            tr.appendChild(tdF1);
+
+                            prfTableBody.appendChild(tr);
+                        });
+                    } else {
+                        console.warn('prfTableBody element not found.');
+                    }
+                }
+
+                // 6. Final metrics text
+                if (data.final_metrics) {
+                    const finalMetricsDiv = document.getElementById('finalMetrics');
+                    finalMetricsDiv.innerHTML = Object.entries(data.final_metrics)
+                        .map(([k, v]) => {
+                            const isAccuracy = k.toLowerCase().includes('accuracy');
+                            if (typeof v === 'number') {
+                                return `<div><strong>${k}:</strong> ${(isAccuracy ? v * 100 : v).toFixed(4)}${isAccuracy ? '%' : ''}</div>`;
+                            } else {
+                                return `<div><strong>${k}:</strong> ${v}</div>`;
+                            }
+                        })
+                        .join('');
+                }
+
+            } else {
+                trainingStatus.textContent = `Training failed: ${data.error || 'Unknown error'}`;
+                trainingStatus.style.color = 'red';
+            }
+        } catch (error) {
+            trainingStatus.textContent = `Training error: ${error.message}`;
+            trainingStatus.style.color = 'red';
+        } finally {
+            trainButton.disabled = false;
+            const spinner = document.getElementById('loading-spinner');
+            if (spinner) spinner.style.display = 'none';
+            setTimeout(() => { trainingStatus.textContent = ''; }, 5000);
+        }
+    });
+}
+
+// Add keyframes animation CSS for spinner once
+const style = document.createElement('style');
+style.textContent = `
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}`;
+document.head.appendChild(style);
+

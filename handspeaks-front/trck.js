@@ -599,7 +599,7 @@ function handlePrediction(prediction) {
     clearTimeout(appState.inactivityTimer);
     document.getElementById('prediction').textContent = prediction;
 
-    if (prediction === "no gesture") {
+    if (prediction === "No gesture") {
         appState.inactivityTimer = setTimeout(finalizeSentence, CONFIG.inactivityTimeout);
     } else {
         appState.currentSentence.push(prediction);

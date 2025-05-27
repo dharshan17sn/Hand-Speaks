@@ -2,10 +2,11 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Training - Handspeaks</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/touch-sdk@0.5.2/dist/main.js"></script>
     <script type="importmap">
         {
@@ -30,7 +31,7 @@
             </ul>
         </nav>
         <div class="search-container">
-            <input type="text" placeholder="Search..." class="search-input">
+            <input type="text" placeholder="Search..." class="search-input" />
             <button class="search-button">
                 <ion-icon name="search-outline"></ion-icon>
             </button>
@@ -41,16 +42,16 @@
         <section class="training-container">
             <h2>Gesture Training</h2>
             <p>Record and train your gestures using our interactive training tools.</p>
-            
+
             <div class="training-controls">
                 <div class="control-section record-section">
                     <div class="input-group">
                         <label for="gesture-id">Gesture ID:</label>
-                        <input type="number" id="gesture-id" value="235" min="1">
+                        <input type="number" id="gesture-id" value="235" min="1" />
                     </div>
                     <div class="input-group">
                         <label for="class-label">Class Label:</label>
-                        <input type="text" id="class-label" placeholder="Enter gesture label">
+                        <input type="text" id="class-label" placeholder="Enter gesture label" />
                     </div>
                 </div>
 
@@ -74,14 +75,14 @@
                         <div class="delete-group">
                             <label for="delete-id">Delete by ID:</label>
                             <div class="delete-input-group">
-                                <input type="number" id="delete-id" placeholder="Enter ID" min="1">
+                                <input type="number" id="delete-id" placeholder="Enter ID" min="1" />
                                 <button id="delete-by-id" class="control-button delete">Delete</button>
                             </div>
                         </div>
                         <div class="delete-group">
                             <label for="delete-label">Delete by Label:</label>
-                            <div class="delete-input-group">
-                                <input type="text" id="delete-label" placeholder="Enter label">
+                            <div class="delete-inputs-group">
+                                <input type="text" id="delete-label" placeholder="Enter label" />
                                 <button id="delete-by-label" class="control-button delete">Delete</button>
                             </div>
                         </div>
@@ -94,6 +95,80 @@
             <div class="visualization-container">
                 <div id="viewer-container" class="viewer-container"></div>
                 <div id="data-flow-container" class="data-flow-container"></div>
+            </div>
+
+            <div class="control-section train-section">
+                <button id="train-button" class="control-button primary">Train Model</button>
+                <div class="hyperparameter-config">
+                    <h4>Hyperparameters</h4>
+                    <label for="epochs">Epochs:</label>
+                    <input type="number" id="epochs" value="8" min="1" />
+
+                    <label for="batch-size">Batch Size:</label>
+                    <input type="number" id="batch-size" value="32" min="1" />
+
+                    <label for="lstm-units">LSTM Units:</label>
+                    <input type="number" id="lstm-units" value="64" min="1" />
+                </div>
+
+                <!-- Training Status Messages -->
+                <div id="training-status" class="training-status" style="margin-top: 10px;"></div>
+
+                <!-- Removed Training Progress Bar -->
+
+
+                <!-- Training Status Text -->
+                <div id="training-status" style="margin-top: 10px; font-weight: bold;"></div>
+
+            </div>
+
+            <!-- New comprehensive training metrics section -->
+            <div id="training-metrics" style="margin-top: 30px; max-width: 700px; font-family: Arial, sans-serif; display:none;">
+
+                <h3>Training Metrics</h3>
+
+                <!-- Loss Chart -->
+                <div style="margin-bottom: 30px;">
+                    <canvas id="lossChart" style="max-height: 300px;"></canvas>
+                </div>
+
+                <!-- Accuracy Chart -->
+                <div style="margin-bottom: 30px;">
+                    <canvas id="accuracyChart" style="max-height: 300px;"></canvas>
+                </div>
+
+                <!-- Confusion Matrix Chart -->
+                <div style="margin-bottom: 30px;">
+                    <h4>Confusion Matrix</h4>
+                    <canvas id="confusionMatrixChart" style="max-height: 400px;"></canvas>
+                </div>
+
+                <!-- Final Test Metrics -->
+                <div id="finalMetrics" style="margin-bottom: 30px; font-weight: bold; font-size: 1.1em;"></div>
+
+                <!-- Class Labels -->
+                <div id="classLabels" style="margin-bottom: 30px;">
+                    <h4>Class Labels</h4>
+                    <ul id="classList" style="list-style-type: none; padding-left: 0;"></ul>
+                </div>
+
+                <!-- Precision, Recall, F1 Score -->
+                <div id="prfMetrics" style="margin-bottom: 30px;">
+                    <h4>Precision, Recall, F1 Score per Class</h4>
+                    <table id="prfTable" border="1" cellpadding="5" cellspacing="0"
+                        style="border-collapse: collapse; width: 100%; max-width: 600px;">
+                        <thead>
+                            <tr>
+                                <th>Class</th>
+                                <th>Precision</th>
+                                <th>Recall</th>
+                                <th>F1 Score</th>
+                            </tr>
+                        </thead>
+                        <tbody id="prfTableBody"></tbody>
+                    </table>
+                </div>
+
             </div>
 
             <div class="sensor-data-display">

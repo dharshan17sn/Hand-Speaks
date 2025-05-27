@@ -14,6 +14,12 @@ from tensorflow.keras.layers import LSTM, Dense, Dropout
 from tensorflow.keras.utils import to_categorical
 import matplotlib.pyplot as plt
 import pandas as pd
+from sklearn.model_selection import train_test_split
+import tensorflow.keras as keras
+from tensorflow.keras.optimizers import Adam
+from sklearn.metrics import confusion_matrix, precision_recall_fscore_support
+
+
 
 
 # Load environment variables
@@ -307,31 +313,35 @@ def delete_rows():
     except Exception as e:
         logging.error(f"Error deleting rows: {str(e)}")
         return jsonify({"error": f"Failed to delete rows: {str(e)}"}), 500
-@app.route('/train_model', methods=['POST'])
-def train_model():
-    """Train the LSTM model from sensor.csv"""
-    try:
-        file_path = 'D:/projects/Hand-Speaks/AI_model/sensor.csv'
-        sequence_length = 100
 
-        data = pd.read_csv(file_path)
+
+@app.route('/train-model', methods=['POST'])
+def train_model():
+    try:
+        # Read hyperparameters
+        params = request.get_json()
+        epochs = int(params.get('epochs', 8))
+        batch_size = int(params.get('batch_size', 32))
+        learning_rate = float(params.get('learning_rate', 0.001))
+
+        # Load dataset
+        data = pd.read_csv('sensor.csv')
 
         feature_columns = [
             'Acceleration_x', 'Acceleration_y', 'Acceleration_z',
             'Gravity_x', 'Gravity_y', 'Gravity_z',
             'Angular Velocity_x', 'Angular Velocity_y', 'Angular Velocity_z'
         ]
-
+        sequence_length = 100
         segments = []
+
+        # Segment data by ID and sequence length
         for id_, group in data.groupby('ID'):
             label = group['Character'].iloc[0]
             samples = group[feature_columns].values
             for start in range(0, len(samples) - sequence_length + 1):
                 segment = samples[start:start + sequence_length]
                 segments.append((segment, label))
-
-        if not segments:
-            return jsonify({"error": "Not enough data to form sequences."}), 400
 
         segment_df = pd.DataFrame(segments, columns=['Segment', 'Label'])
         X = np.array(segment_df['Segment'].tolist())
@@ -340,47 +350,84 @@ def train_model():
         y_encoded, unique_labels = pd.factorize(y)
         y_categorical = to_categorical(y_encoded)
 
-        X_train, X_test, y_train, y_test = train_test_split(X, y_categorical, test_size=0.2, random_state=42)
+        # Split dataset
+        X_train, X_test, y_train, y_test = train_test_split(
+            X, y_categorical, test_size=0.2, random_state=42)
 
+        # Build LSTM model
         model = Sequential()
-        model.add(LSTM(64, return_sequences=True, input_shape=(sequence_length, 9)))
+        model.add(LSTM(64, return_sequences=True, input_shape=(sequence_length, len(feature_columns))))
         model.add(Dropout(0.2))
         model.add(LSTM(64))
         model.add(Dropout(0.2))
         model.add(Dense(len(unique_labels), activation='softmax'))
 
-        model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+        model.compile(
+            loss='categorical_crossentropy',
+            optimizer=Adam(learning_rate=learning_rate),
+            metrics=['accuracy']
+        )
 
-        history = model.fit(X_train, y_train, epochs=8, batch_size=32, validation_data=(X_test, y_test))
+        # Train model
+        history = model.fit(
+            X_train, y_train,
+            epochs=epochs,
+            batch_size=batch_size,
+            validation_data=(X_test, y_test),
+            verbose=1
+        )
 
-        loss, accuracy = model.evaluate(X_test, y_test)
-        training_history = {
-            "message": "Model trained successfully",
-            "training_history": training_history,
-            "loss": [float(h) for h in history.history['loss']],
-            "val_loss": [float(h) for h in history.history['val_loss']],
-            "accuracy": [float(h) for h in history.history['accuracy']],
-            "val_accuracy": [float(h) for h in history.history['val_accuracy']]
-        }
+        # Evaluate on test set
+        loss, accuracy = model.evaluate(X_test, y_test, verbose=0)
 
-        keras.saving.save_model(model, 'model.h5')
+        # Predict classes for confusion matrix and PRF metrics
+        y_pred_probs = model.predict(X_test)
+        y_pred = np.argmax(y_pred_probs, axis=1)
+        y_true = np.argmax(y_test, axis=1)
+
+        # Confusion matrix
+        cm = confusion_matrix(y_true, y_pred)
+        cm_list = cm.tolist()
+
+        # Precision, Recall, F1 per class
+        precision, recall, f1_score, _ = precision_recall_fscore_support(
+            y_true, y_pred, labels=range(len(unique_labels)), zero_division=0)
+
+        prf_per_class = {}
+        for i, label in enumerate(unique_labels):
+            prf_per_class[label] = {
+                'precision': float(precision[i]),
+                'recall': float(recall[i]),
+                'f1_score': float(f1_score[i])
+            }
+
+        # Save model and labels
+        model.save('model.h5')
         np.save('unique_labels.npy', unique_labels)
 
-        return jsonify({
-            "message": "Model trained successfully",
-            "test_loss": round(float(loss), 4),
-            "test_accuracy": round(float(accuracy), 4),
-            "num_classes": len(unique_labels),
-            "classes": unique_labels.tolist()
-        })
+        # Compose response
+        metrics = {
+            'status': 'completed',
+            'epochs': len(history.history['loss']),
+            'loss': history.history['loss'],
+            'val_loss': history.history['val_loss'],
+            'accuracy': history.history['accuracy'],
+            'val_accuracy': history.history['val_accuracy'],
+            'final_test_loss': float(loss),
+            'final_test_accuracy': float(accuracy),
+            'confusion_matrix': cm_list,
+            'class_labels': list(unique_labels),
+            'prf_per_class': prf_per_class,
+            'final_metrics': {
+                'Final Test Loss': float(loss),
+                'Final Test Accuracy': float(accuracy)
+            }
+        }
+
+        return jsonify(metrics)
 
     except Exception as e:
-        import traceback
-        return jsonify({
-            "error": str(e),
-            "traceback": traceback.format_exc()
-        }), 500
-
+        return jsonify({'status': 'error', 'error': str(e)}), 500
 
 if __name__ == '__main__':
     app.run(debug=True)

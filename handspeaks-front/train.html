@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Gesture Trainer</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/three@0.157.0/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@google/model-viewer"></script>
+    <script src="https://cdn.jsdelivr.net/npm/gl-matrix@3.4.3/gl-matrix-min.js"></script>
+    <script src="TouchSDK.js"></script> <!-- Add your TouchSDK loader -->
+</head>
+<body>
+    <header>
+        <h1>Gesture Trainer</h1>
+        <div class="search-container"></div>
+    </header>
+
+    <div id="viewer-container" style="width: 100%; height: 400px;"></div>
+
+    <div class="controls">
+        <div class="id-input">
+            <input id="gesture-id" type="text" placeholder="Enter Gesture ID" />
+            <input id="class-label" type="text" placeholder="Enter Class Label" />
+        </div>
+        <button id="record-button">Start Recording</button>
+        <span id="recording-status"></span>
+        <p>Total Rows Recorded: <span id="row-count">0</span></p>
+        <button id="save-button" onclick="saveRecordedData()">Save CSV</button>
+        <button id="train-button" onclick="trainModel()">Train Model</button>
+        <div id="operation-status" class="operation-status"></div>
+    </div>
+
+    <div id="csv-content" style="overflow-x: auto;"></div>
+
+    <!-- Sensor Values (Optional display) -->
+    <div class="sensor-values">
+        <p><strong>Acceleration:</strong> <span id="acceleration-values">0, 0, 0</span></p>
+        <p><strong>Gravity:</strong> <span id="gravity-values">0, 0, 0</span></p>
+        <p><strong>Angular Velocity:</strong> <span id="angular-values">0, 0, 0</span></p>
+        <p><strong>Orientation:</strong> <span id="orientation-values">0, 0, 0</span></p>
+    </div>
+
+    <!-- Include your main script last -->
+    <script type="module" src="train.js"></script>
+</body>
+</html>
