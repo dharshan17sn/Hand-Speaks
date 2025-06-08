@@ -331,64 +331,73 @@ function setupUI() {
     
     rightPanel.appendChild(timeCard);
 
-    // Sentence Display with Apple-style list
+    // Sentence Display with optimized size
     const sentenceCard = document.createElement('div');
     sentenceCard.style.backgroundColor = CONFIG.colors.cardBackground;
     sentenceCard.style.borderRadius = CONFIG.cornerRadius.medium;
-    sentenceCard.style.padding = CONFIG.spacing.medium;
+    sentenceCard.style.padding = `${CONFIG.spacing.small} ${CONFIG.spacing.medium}`; // Reduced padding
     sentenceCard.style.boxShadow = '0 1px 3px rgba(0,0,0,0.05)';
+    sentenceCard.style.maxHeight = '300px'; // Add max height
+    sentenceCard.style.overflowY = 'auto'; // Add scrolling if needed
     
     const sentenceHeader = document.createElement('div');
     sentenceHeader.textContent = 'Sentence Builder';
     sentenceHeader.style.fontWeight = '600';
-    sentenceHeader.style.fontSize = CONFIG.typography.subhead;
+    sentenceHeader.style.fontSize = CONFIG.typography.footnote; // Smaller font
     sentenceHeader.style.color = CONFIG.colors.secondaryText;
-    sentenceHeader.style.marginBottom = CONFIG.spacing.small;
+    sentenceHeader.style.marginBottom = '4px'; // Reduced margin
     sentenceCard.appendChild(sentenceHeader);
     
     const currentSentenceContainer = document.createElement('div');
-    currentSentenceContainer.style.marginBottom = CONFIG.spacing.medium;
+    currentSentenceContainer.style.marginBottom = CONFIG.spacing.small; // Reduced margin
     
     const currentSentenceLabel = document.createElement('div');
     currentSentenceLabel.textContent = 'Current';
     currentSentenceLabel.style.fontWeight = '500';
-    currentSentenceLabel.style.fontSize = CONFIG.typography.footnote;
+    currentSentenceLabel.style.fontSize = CONFIG.typography.caption2; // Smaller font
     currentSentenceLabel.style.color = CONFIG.colors.secondaryText;
-    currentSentenceLabel.style.marginBottom = '4px';
+    currentSentenceLabel.style.marginBottom = '2px'; // Reduced margin
     currentSentenceContainer.appendChild(currentSentenceLabel);
     
     const currentSentenceEl = document.createElement('div');
     currentSentenceEl.id = 'current-sentence';
-    currentSentenceEl.style.fontSize = CONFIG.typography.body;
+    currentSentenceEl.style.fontSize = CONFIG.typography.subhead; // Smaller font
     currentSentenceEl.style.color = CONFIG.colors.text;
-    currentSentenceEl.style.minHeight = '24px';
+    currentSentenceEl.style.minHeight = '20px'; // Reduced height
+    currentSentenceEl.style.maxHeight = '60px'; // Add max height
+    currentSentenceEl.style.overflowY = 'auto'; // Add scrolling if needed
     currentSentenceContainer.appendChild(currentSentenceEl);
     
     sentenceCard.appendChild(currentSentenceContainer);
     
-    // Separator
+    // Separator with reduced margin
     const separator = document.createElement('div');
     separator.style.height = '1px';
     separator.style.backgroundColor = CONFIG.colors.separator;
-    separator.style.margin = `${CONFIG.spacing.medium} 0`;
+    separator.style.margin = `${CONFIG.spacing.small} 0`;
     sentenceCard.appendChild(separator);
     
     const historyHeader = document.createElement('div');
     historyHeader.textContent = 'History';
     historyHeader.style.fontWeight = '600';
-    historyHeader.style.fontSize = CONFIG.typography.subhead;
+    historyHeader.style.fontSize = CONFIG.typography.footnote; // Smaller font
     historyHeader.style.color = CONFIG.colors.secondaryText;
-    historyHeader.style.marginBottom = CONFIG.spacing.small;
+    historyHeader.style.marginBottom = '4px'; // Reduced margin
     sentenceCard.appendChild(historyHeader);
     
     const historyContainer = document.createElement('div');
     historyContainer.id = 'sentence-history';
     historyContainer.style.display = 'flex';
     historyContainer.style.flexDirection = 'column';
-    historyContainer.style.gap = CONFIG.spacing.medium;
+    historyContainer.style.gap = CONFIG.spacing.small; // Reduced gap
+    historyContainer.style.maxHeight = '180px'; // Add max height
+    historyContainer.style.overflowY = 'auto'; // Add scrolling if needed
     sentenceCard.appendChild(historyContainer);
     
     rightPanel.appendChild(sentenceCard);
+        // Add sensor data visualization
+    const sensorViz = createSensorDataVisualization();
+    rightPanel.appendChild(sensorViz);
 
     // Add button event listeners
     connectButton.addEventListener('mouseover', () => {
@@ -398,6 +407,7 @@ function setupUI() {
     connectButton.addEventListener('mouseout', () => {
         connectButton.style.backgroundColor = CONFIG.colors.primary;
     });
+
 
     watch.addEventListener('connected', () => {
         connectButton.textContent = 'Connected';
@@ -786,12 +796,12 @@ function addToHistory(original, corrected, enhanced) {
         const historyElements = historyContainer.children;
         if (historyElements.length > existingIndex) {
             historyElements[existingIndex].innerHTML = `
-                <div class="history-item-content">
-                    <div class="history-original">
-                        Original: <span class="strikethrough">${original}</span>
+                <div class="history-item-content" style="font-size: ${CONFIG.typography.caption2}; padding: 4px 0;">
+                    <div class="history-original" style="margin-bottom: 2px;">
+                        Original: <span class="strikethrough" style="color: ${CONFIG.colors.tertiaryText};">${original}</span>
                     </div>
-                    <div class="history-corrected">
-                        Corrected: <span>${corrected}</span>
+                    <div class="history-corrected" style="margin-bottom: 2px;">
+                        Corrected: <span style="color: ${CONFIG.colors.secondaryText};">${corrected}</span>
                     </div>
                     <div class="history-enhanced">
                         <span style="color: ${CONFIG.tones.find(t => t.id === appState.selectedTone).color};">${enhanced}</span>
@@ -817,12 +827,12 @@ function addToHistory(original, corrected, enhanced) {
     historyItem.className = 'history-item';
     
     historyItem.innerHTML = `
-        <div class="history-item-content">
-            <div class="history-original">
-                Original: <span class="strikethrough">${original}</span>
+        <div class="history-item-content" style="font-size: ${CONFIG.typography.caption2}; padding: 4px 0;">
+            <div class="history-original" style="margin-bottom: 2px;">
+                Original: <span class="strikethrough" style="color: ${CONFIG.colors.tertiaryText};">${original}</span>
             </div>
-            <div class="history-corrected">
-                Corrected: <span>${corrected}</span>
+            <div class="history-corrected" style="margin-bottom: 2px;">
+                Corrected: <span style="color: ${CONFIG.colors.secondaryText};">${corrected}</span>
             </div>
             <div class="history-enhanced">
                 <span style="color: ${CONFIG.tones.find(t => t.id === appState.selectedTone).color};">${enhanced}</span>
@@ -973,7 +983,7 @@ function createDataFlowVisualization() {
     container.style.width = '100%';
     container.style.backgroundColor = CONFIG.colors.cardBackground;
     container.style.borderRadius = CONFIG.cornerRadius.large;
-    container.style.padding = CONFIG.spacing.medium;
+    container.style.padding = '10px 10px 16px 10px'; // Reduced top/bottom padding
     container.style.boxShadow = '0 2px 8px rgba(0,0,0,0.08)';
     container.style.position = 'relative';
     container.style.overflow = 'hidden';
@@ -986,11 +996,11 @@ function createDataFlowVisualization() {
     header.style.display = 'flex';
     header.style.justifyContent = 'space-between';
     header.style.alignItems = 'center';
-    header.style.marginBottom = CONFIG.spacing.medium;
+    header.style.marginBottom = '8px'; // Smaller gap
     const title = document.createElement('h3');
     title.textContent = 'BLE Connection';
     title.style.margin = '0';
-    title.style.fontSize = CONFIG.typography.title3;
+    title.style.fontSize = '16px'; // Smaller font
     title.style.fontWeight = '600';
     title.style.color = CONFIG.colors.text;
     const statusIndicator = document.createElement('div');
@@ -998,11 +1008,11 @@ function createDataFlowVisualization() {
     statusIndicator.className = 'ble-disconnected';
     statusIndicator.style.display = 'flex';
     statusIndicator.style.alignItems = 'center';
-    statusIndicator.style.gap = '8px';
-    statusIndicator.style.padding = '4px 12px';
-    statusIndicator.style.borderRadius = '12px';
+    statusIndicator.style.gap = '6px'; // Smaller gap
+    statusIndicator.style.padding = '2px 8px'; // Smaller padding
+    statusIndicator.style.borderRadius = '10px';
     statusIndicator.style.backgroundColor = CONFIG.colors.systemFill;
-    statusIndicator.style.fontSize = CONFIG.typography.footnote;
+    statusIndicator.style.fontSize = '12px'; // Smaller font
     statusIndicator.style.fontWeight = '500';
     statusIndicator.innerHTML = `
         <span class="status-dot"></span>
@@ -1015,32 +1025,32 @@ function createDataFlowVisualization() {
     // Visualization area
     const visualizationArea = document.createElement('div');
     visualizationArea.style.position = 'relative';
-    visualizationArea.style.height = '120px';
+    visualizationArea.style.height = '70px'; // Reduced height
     visualizationArea.style.display = 'flex';
     visualizationArea.style.alignItems = 'center';
     visualizationArea.style.justifyContent = 'space-between';
-    visualizationArea.style.padding = '0 20px';
-    visualizationArea.style.marginBottom = CONFIG.spacing.medium;
+    visualizationArea.style.padding = '0 10px'; // Smaller padding
+    visualizationArea.style.marginBottom = '8px'; // Smaller gap
 
     // Watch device
     const watchDevice = document.createElement('div');
     watchDevice.style.position = 'relative';
-    watchDevice.style.width = '80px';
-    watchDevice.style.height = '80px';
+    watchDevice.style.width = '48px'; // Smaller
+    watchDevice.style.height = '48px';
     watchDevice.style.display = 'flex';
     watchDevice.style.flexDirection = 'column';
     watchDevice.style.alignItems = 'center';
-    watchDevice.style.gap = '4px';
+    watchDevice.style.gap = '2px';
     const watchIcon = document.createElement('div');
-    watchIcon.style.fontSize = '32px';
+    watchIcon.style.fontSize = '20px'; // Smaller
     watchIcon.textContent = '⌚';
     watchIcon.style.transition = `transform ${CONFIG.animations.duration.medium} ${CONFIG.animations.timing.spring}`;
     const watchLabel = document.createElement('div');
     watchLabel.textContent = 'Watch';
-    watchLabel.style.fontSize = CONFIG.typography.footnote;
+    watchLabel.style.fontSize = '10px';
     watchLabel.style.color = CONFIG.colors.secondaryText;
     const watchDetails = document.createElement('div');
-    watchDetails.style.fontSize = CONFIG.typography.caption2;
+    watchDetails.style.fontSize = '9px';
     watchDetails.style.color = CONFIG.colors.tertiaryText;
     watchDetails.textContent = 'BLE Device';
     watchDevice.appendChild(watchIcon);
@@ -1052,11 +1062,11 @@ function createDataFlowVisualization() {
     const connectionLine = document.createElement('div');
     connectionLine.className = 'ble-connection-line';
     connectionLine.style.flex = '1';
-    connectionLine.style.height = '6px';
+    connectionLine.style.height = '4px'; // Smaller
     connectionLine.style.background = 'linear-gradient(90deg, #007AFF 0%, #34C759 100%)';
     connectionLine.style.position = 'relative';
-    connectionLine.style.margin = '0 20px';
-    connectionLine.style.borderRadius = '3px';
+    connectionLine.style.margin = '0 10px'; // Smaller
+    connectionLine.style.borderRadius = '2px';
     connectionLine.style.overflow = 'visible';
     visualizationArea.appendChild(connectionLine);
 
@@ -1067,15 +1077,15 @@ function createDataFlowVisualization() {
     signalBars.style.flexDirection = 'column';
     signalBars.style.justifyContent = 'center';
     signalBars.style.alignItems = 'center';
-    signalBars.style.height = '80px';
-    signalBars.style.gap = '2px';
+    signalBars.style.height = '48px'; // Smaller
+    signalBars.style.gap = '1px';
     for (let i = 0; i < 4; i++) {
         const bar = document.createElement('div');
         bar.className = 'ble-signal-bar';
-        bar.style.width = `${10 + i * 6}px`;
-        bar.style.height = `${12 + i * 8}px`;
+        bar.style.width = `${6 + i * 4}px`;
+        bar.style.height = `${8 + i * 5}px`;
         bar.style.background = '#E5E5EA';
-        bar.style.borderRadius = '3px';
+        bar.style.borderRadius = '2px';
         bar.style.transition = 'background 0.3s, box-shadow 0.3s';
         signalBars.appendChild(bar);
     }
@@ -1084,22 +1094,22 @@ function createDataFlowVisualization() {
     // Frontend device
     const frontendDevice = document.createElement('div');
     frontendDevice.style.position = 'relative';
-    frontendDevice.style.width = '80px';
-    frontendDevice.style.height = '80px';
+    frontendDevice.style.width = '48px';
+    frontendDevice.style.height = '48px';
     frontendDevice.style.display = 'flex';
     frontendDevice.style.flexDirection = 'column';
     frontendDevice.style.alignItems = 'center';
-    frontendDevice.style.gap = '4px';
+    frontendDevice.style.gap = '2px';
     const frontendIcon = document.createElement('div');
-    frontendIcon.style.fontSize = '32px';
+    frontendIcon.style.fontSize = '20px';
     frontendIcon.textContent = '💻';
     frontendIcon.style.transition = `transform ${CONFIG.animations.duration.medium} ${CONFIG.animations.timing.spring}`;
     const frontendLabel = document.createElement('div');
     frontendLabel.textContent = 'Frontend';
-    frontendLabel.style.fontSize = CONFIG.typography.footnote;
+    frontendLabel.style.fontSize = '10px';
     frontendLabel.style.color = CONFIG.colors.secondaryText;
     const frontendDetails = document.createElement('div');
-    frontendDetails.style.fontSize = CONFIG.typography.caption2;
+    frontendDetails.style.fontSize = '9px';
     frontendDetails.style.color = CONFIG.colors.tertiaryText;
     frontendDetails.textContent = 'Web App';
     frontendDevice.appendChild(frontendIcon);
@@ -1188,6 +1198,223 @@ function updateBLEPacketValues() {
     document.getElementById('ble-gravity').textContent = appState.sensorData.gravity.map(x => x.toFixed(2)).join(', ');
     document.getElementById('ble-angular').textContent = appState.sensorData.angularVelocity.map(x => x.toFixed(2)).join(', ');
     document.getElementById('ble-orientation').textContent = appState.sensorData.orientation.map(x => x.toFixed(2)).join(', ');
+}
+
+// Create real-time sensor data visualization
+function createSensorDataVisualization() {
+    const container = document.createElement('div');
+    container.id = 'sensor-data-visualization';
+    container.style.width = '100%';
+    container.style.backgroundColor = CONFIG.colors.cardBackground;
+    container.style.borderRadius = CONFIG.cornerRadius.large;
+    container.style.padding = CONFIG.spacing.medium;
+    container.style.boxShadow = '0 2px 8px rgba(0,0,0,0.08)';
+    container.style.marginTop = CONFIG.spacing.medium;
+    container.style.border = '1px solid rgba(0,0,0,0.1)';
+    container.style.overflow = 'hidden';
+
+    // Header
+    const header = document.createElement('div');
+    header.style.display = 'flex';
+    header.style.justifyContent = 'space-between';
+    header.style.alignItems = 'center';
+    header.style.marginBottom = CONFIG.spacing.medium;
+    
+    const title = document.createElement('h3');
+    title.textContent = 'Real-time Sensor Data';
+    title.style.margin = '0';
+    title.style.fontSize = CONFIG.typography.title3;
+    title.style.fontWeight = '600';
+    title.style.color = CONFIG.colors.text;
+    
+    const bufferInfo = document.createElement('div');
+    bufferInfo.id = 'buffer-info';
+    bufferInfo.style.fontSize = CONFIG.typography.footnote;
+    bufferInfo.style.color = CONFIG.colors.secondaryText;
+    bufferInfo.textContent = `Buffer: 0/100`;
+    
+    header.appendChild(title);
+    header.appendChild(bufferInfo);
+    container.appendChild(header);
+
+    // Create visualization canvas
+    const canvasContainer = document.createElement('div');
+    canvasContainer.style.position = 'relative';
+    canvasContainer.style.height = '200px';
+    canvasContainer.style.marginBottom = CONFIG.spacing.medium;
+    
+    const canvas = document.createElement('canvas');
+    canvas.id = 'sensor-data-canvas';
+    canvas.style.width = '100%';
+    canvas.style.height = '100%';
+    canvas.style.borderRadius = CONFIG.cornerRadius.medium;
+    canvas.style.backgroundColor = CONFIG.colors.systemFill;
+    
+    canvasContainer.appendChild(canvas);
+    container.appendChild(canvasContainer);
+
+    // Create legend
+    const legend = document.createElement('div');
+    legend.style.display = 'flex';
+    legend.style.justifyContent = 'center';
+    legend.style.gap = CONFIG.spacing.medium;
+    legend.style.marginTop = CONFIG.spacing.small;
+    
+    const sensorTypes = [
+        { label: 'Acceleration', color: '#FF3B30' },
+        { label: 'Gravity', color: '#34C759' },
+        { label: 'Angular Velocity', color: '#5856D6' }
+    ];
+    
+    sensorTypes.forEach(type => {
+        const legendItem = document.createElement('div');
+        legendItem.style.display = 'flex';
+        legendItem.style.alignItems = 'center';
+        legendItem.style.gap = '6px';
+        
+        const colorDot = document.createElement('div');
+        colorDot.style.width = '8px';
+        colorDot.style.height = '8px';
+        colorDot.style.borderRadius = '50%';
+        colorDot.style.backgroundColor = type.color;
+        
+        const label = document.createElement('span');
+        label.textContent = type.label;
+        label.style.fontSize = CONFIG.typography.caption2;
+        label.style.color = CONFIG.colors.secondaryText;
+        
+        legendItem.appendChild(colorDot);
+        legendItem.appendChild(label);
+        legend.appendChild(legendItem);
+    });
+    
+    container.appendChild(legend);
+
+    // Initialize canvas context and animation
+    const ctx = canvas.getContext('2d');
+    let animationFrame;
+    let lastTimestamp = 0;
+    
+    function resizeCanvas() {
+        const rect = canvas.getBoundingClientRect();
+        canvas.width = rect.width * window.devicePixelRatio;
+        canvas.height = rect.height * window.devicePixelRatio;
+        ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+    }
+    
+    function drawSensorData(timestamp) {
+        if (!lastTimestamp) lastTimestamp = timestamp;
+        const deltaTime = timestamp - lastTimestamp;
+        lastTimestamp = timestamp;
+        
+        const width = canvas.width / window.devicePixelRatio;
+        const height = canvas.height / window.devicePixelRatio;
+        
+        // Clear canvas with fade effect
+        ctx.fillStyle = CONFIG.colors.systemFill;
+        ctx.globalAlpha = 0.1;
+        ctx.fillRect(0, 0, width, height);
+        ctx.globalAlpha = 1;
+        
+        // Update buffer info
+        const bufferInfo = document.getElementById('buffer-info');
+        bufferInfo.textContent = `Buffer: ${appState.sensorDataBuffer.length}/${CONFIG.sequenceLength}`;
+        
+        // Draw sensor data
+        if (appState.sensorDataBuffer.length > 0) {
+            const dataPoints = appState.sensorDataBuffer;
+            const pointWidth = width / (CONFIG.sequenceLength - 1);
+            
+            // Draw acceleration (red)
+            drawDataLine(ctx, dataPoints, 0, 2, '#FF3B30', width, height, pointWidth);
+            
+            // Draw gravity (green)
+            drawDataLine(ctx, dataPoints, 3, 5, '#34C759', width, height, pointWidth);
+            
+            // Draw angular velocity (purple)
+            drawDataLine(ctx, dataPoints, 6, 8, '#5856D6', width, height, pointWidth);
+            
+            // Add glow effect
+            addGlowEffect(ctx, width, height);
+        }
+        
+        animationFrame = requestAnimationFrame(drawSensorData);
+    }
+    
+    function drawDataLine(ctx, dataPoints, startIdx, endIdx, color, width, height, pointWidth) {
+        ctx.beginPath();
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 2;
+        
+        dataPoints.forEach((point, index) => {
+            const x = index * pointWidth;
+            // Calculate average of the three values for this sensor type
+            const avg = (point[startIdx] + point[startIdx + 1] + point[endIdx]) / 3;
+            // Normalize and scale to canvas height
+            const y = height - ((avg + 1) * height / 2);
+            
+            if (index === 0) {
+                ctx.moveTo(x, y);
+            } else {
+                ctx.lineTo(x, y);
+            }
+        });
+        
+        ctx.stroke();
+        
+        // Add gradient fill
+        const gradient = ctx.createLinearGradient(0, 0, 0, height);
+        gradient.addColorStop(0, `${color}33`);
+        gradient.addColorStop(1, `${color}00`);
+        
+        ctx.fillStyle = gradient;
+        ctx.lineTo(width, height);
+        ctx.lineTo(0, height);
+        ctx.closePath();
+        ctx.fill();
+    }
+    
+    function addGlowEffect(ctx, width, height) {
+        ctx.shadowColor = '#007AFF';
+        ctx.shadowBlur = 20;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 0;
+        
+        // Draw a subtle grid
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+        ctx.lineWidth = 0.5;
+        
+        // Vertical lines
+        for (let x = 0; x < width; x += width / 10) {
+            ctx.beginPath();
+            ctx.moveTo(x, 0);
+            ctx.lineTo(x, height);
+            ctx.stroke();
+        }
+        
+        // Horizontal lines
+        for (let y = 0; y < height; y += height / 5) {
+            ctx.beginPath();
+            ctx.moveTo(0, y);
+            ctx.lineTo(width, y);
+            ctx.stroke();
+        }
+        
+        ctx.shadowBlur = 0;
+    }
+    
+    // Initialize canvas and start animation
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+    animationFrame = requestAnimationFrame(drawSensorData);
+    
+    // Cleanup function
+    container.cleanup = () => {
+        window.removeEventListener('resize', resizeCanvas);
+        cancelAnimationFrame(animationFrame);
+    };
+    
+    return container;
 }
 
 // Start the application

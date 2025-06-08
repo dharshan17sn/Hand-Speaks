@@ -452,18 +452,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Style the delete section specifically
     const deleteSection = document.querySelector('.delete-section');
-    deleteSection.style.flexDirection = 'column';
-    deleteSection.style.background = '#fff';
-    deleteSection.style.padding = '15px';
-    deleteSection.style.borderRadius = '8px';
-    deleteSection.style.border = '1px solid #e1e1e1';
+    if (deleteSection) {
+        deleteSection.style.flexDirection = 'column';
+        deleteSection.style.background = '#fff';
+        deleteSection.style.padding = '15px';
+        deleteSection.style.borderRadius = '8px';
+        deleteSection.style.border = '1px solid #e1e1e1';
+    }
 
     // Style the delete controls grid
     const deleteGrid = document.querySelector('.delete-controls-grid');
-    deleteGrid.style.display = 'grid';
-    deleteGrid.style.gridTemplateColumns = '1fr 1fr';
-    deleteGrid.style.gap = '15px';
-    deleteGrid.style.width = '100%';
+    if (deleteGrid) {
+        deleteGrid.style.display = 'grid';
+        deleteGrid.style.gridTemplateColumns = '1fr 1fr';
+        deleteGrid.style.gap = '15px';
+        deleteGrid.style.width = '100%';
+    }
 
     // Style all input groups
     const inputGroups = document.querySelectorAll('.input-group, .delete-input-group');
@@ -490,19 +494,26 @@ document.addEventListener('DOMContentLoaded', () => {
         label.style.marginBottom = '4px';
     });
 
-    // Style all buttons
-    const buttons = document.querySelectorAll('.control-button');
+    // Style all buttons (including record button)
+    const buttons = document.querySelectorAll('.control-button, .record-button');
     buttons.forEach(button => {
         button.style.padding = '8px 16px';
         button.style.borderRadius = '8px';
         button.style.border = 'none';
         button.style.cursor = 'pointer';
         button.style.fontWeight = '500';
-        button.style.transition = 'background-color 0.3s ease';
+        button.style.transition = 'background-color 0.3s ease, box-shadow 0.2s';
+        button.style.boxShadow = '0 1px 4px rgba(0,0,0,0.07)';
+        button.tabIndex = 0;
+        button.onfocus = () => { button.style.outline = '2px solid #007AFF'; };
+        button.onblur = () => { button.style.outline = 'none'; };
+        button.onmousedown = () => { button.style.transform = 'scale(0.97)'; };
+        button.onmouseup = () => { button.style.transform = 'scale(1)'; };
+        button.onmouseleave = () => { button.style.transform = 'scale(1)'; };
     });
 
-    // Style primary buttons (Save)
-    const primaryButtons = document.querySelectorAll('.control-button.primary');
+    // Style primary buttons (Save, Record)
+    const primaryButtons = document.querySelectorAll('.control-button.primary, .record-button');
     primaryButtons.forEach(button => {
         button.style.backgroundColor = '#007AFF';
         button.style.color = 'white';
@@ -541,6 +552,16 @@ document.addEventListener('DOMContentLoaded', () => {
         button.addEventListener('mouseout', () => {
             button.style.backgroundColor = '#FF3B30';
         });
+    });
+
+    // Style all button groups for layout
+    const buttonGroups = document.querySelectorAll('.button-group');
+    buttonGroups.forEach(group => {
+        group.style.display = 'flex';
+        group.style.gap = '12px';
+        group.style.justifyContent = 'center';
+        group.style.alignItems = 'center';
+        group.style.width = '100%';
     });
 
     // Add event listeners

@@ -770,12 +770,12 @@ body {
 }
 
 @keyframes fadeIn {
-    0% {
+    from {
         opacity: 0;
         transform: translateY(20px);
     }
 
-    100% {
+    to {
         opacity: 1;
         transform: translateY(0);
     }
@@ -2117,5 +2117,277 @@ body#index-page header .search-button ion-icon {
 
 .training-status.info {
   color: #0071e3; /* Apple blue */
+}
+
+#current-sentence::-webkit-scrollbar {
+    width: 8px;
+    background: transparent;
+}
+#current-sentence::-webkit-scrollbar-thumb {
+    background: #e0e0e0;
+    border-radius: 4px;
+}
+body.dark-theme #current-sentence::-webkit-scrollbar-thumb {
+    background: #444;
+}
+#current-sentence {
+    scrollbar-width: thin;
+    scrollbar-color: #e0e0e0 transparent;
+}
+body.dark-theme #current-sentence {
+    scrollbar-color: #444 transparent;
+}
+
+/* --- Training Page Modern Layout --- */
+.training-flex-row {
+  display: flex;
+  gap: 32px;
+  align-items: flex-start;
+  margin-bottom: 32px;
+}
+.section-card {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  padding: 24px 20px;
+  flex: 1;
+  min-width: 320px;
+  max-width: 480px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.viewer-card {
+  max-width: 520px;
+  min-width: 320px;
+  padding: 16px 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.recording-card h3,
+.training-card h3 {
+  font-size: 1.3em;
+  font-weight: 700;
+  margin-bottom: 10px;
+  color: #007AFF;
+  letter-spacing: 0.02em;
+}
+.training-card {
+  margin-top: 36px;
+  background: #f8faff;
+  border: 1px solid #e3eaf2;
+}
+.recording-card {
+  background: #f9f9fb;
+  border: 1px solid #e3eaf2;
+}
+.training-controls {
+  gap: 12px;
+  padding: 0;
+  background: none;
+  border-radius: 0;
+  margin: 0;
+  flex-wrap: wrap;
+}
+.training-controls .control-section {
+  gap: 8px;
+  margin-bottom: 0;
+}
+@media (max-width: 1000px) {
+  .training-flex-row {
+    flex-direction: column;
+    gap: 18px;
+  }
+  .section-card, .viewer-card {
+    max-width: 100%;
+    min-width: 0;
+  }
+}
+
+/* --- Button and Card Consistency for Training Page --- */
+.control-button,
+.record-button,
+.control-button.delete {
+  min-width: 160px;
+  height: 44px;
+  font-size: 1.05em;
+  border-radius: 8px;
+  margin: 0 4px;
+  box-sizing: border-box;
+  display: inline-block;
+}
+.button-row {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  margin: 12px 0 0 0;
+}
+.section-card,
+.recording-card,
+.delete-section {
+  max-width: 480px;
+  min-width: 320px;
+  padding: 24px 20px;
+  margin: 0 auto 24px auto;
+  box-sizing: border-box;
+}
+.input-group,
+.delete-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.input-group label,
+.delete-group label {
+  font-weight: 500;
+  margin-bottom: 2px;
+}
+.input-group input,
+.delete-group input {
+  height: 38px;
+  font-size: 1em;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  padding: 0 10px;
+  box-sizing: border-box;
+}
+.delete-section {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  border: 1px solid #e3eaf2;
+  margin-top: 24px;
+  margin-bottom: 24px;
+  padding: 24px 20px;
+}
+.delete-section h4 {
+  font-size: 1.1em;
+  font-weight: 600;
+  margin-bottom: 10px;
+  color: #FF3B30;
+}
+.delete-controls-grid {
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+}
+@media (max-width: 600px) {
+  .section-card,
+  .recording-card,
+  .delete-section {
+    max-width: 100%;
+    min-width: 0;
+    padding: 12px 4vw;
+  }
+  .button-row {
+    flex-direction: column;
+    gap: 10px;
+  }
+  .delete-controls-grid {
+    flex-direction: column;
+    gap: 10px;
+  }
+}
+
+/* --- Dashboard Layout for Training Page --- */
+.dashboard-row {
+  display: flex;
+  gap: 32px;
+  align-items: flex-start;
+  margin-bottom: 32px;
+}
+.dashboard-card {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  padding: 28px 24px;
+  flex: 1;
+  min-width: 340px;
+  max-width: 650px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  box-sizing: border-box;
+}
+.recording-card, .delete-card, .training-card {
+  margin: 0 auto 24px auto;
+  max-width: 650px;
+}
+.recording-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto auto auto auto;
+  gap: 16px 24px;
+  align-items: center;
+}
+.recording-grid .input-group {
+  grid-column: span 1;
+}
+.recording-grid .button-group {
+  grid-column: span 1;
+  display: flex;
+  justify-content: center;
+}
+.recording-grid .status-group {
+  grid-column: span 1;
+  text-align: left;
+}
+.recording-grid .row-count-group {
+  grid-column: span 1;
+  text-align: right;
+}
+.delete-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px 24px;
+  align-items: center;
+}
+.delete-input-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+.button-group button {
+  width: 100%;
+  min-width: 140px;
+  max-width: 200px;
+}
+.status-group, .row-count-group {
+  font-size: 1em;
+  font-weight: 500;
+}
+@media (max-width: 1000px) {
+  .dashboard-row {
+    flex-direction: column;
+    gap: 18px;
+  }
+  .dashboard-card {
+    max-width: 100%;
+    min-width: 0;
+    padding: 18px 4vw;
+  }
+  .recording-grid, .delete-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}
+
+.sentence-word {
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(12px);
+  animation: sentenceWordFadeIn 0.5s cubic-bezier(0.4,0,0.2,1) forwards;
+}
+@keyframes sentenceWordFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 

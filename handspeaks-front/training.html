@@ -43,132 +43,59 @@
             <h2>Gesture Training</h2>
             <p>Record and train your gestures using our interactive training tools.</p>
 
-            <div class="training-controls">
-                <div class="control-section record-section">
-                    <div class="input-group">
-                        <label for="gesture-id">Gesture ID:</label>
-                        <input type="number" id="gesture-id" value="235" min="1" />
-                    </div>
-                    <div class="input-group">
-                        <label for="class-label">Class Label:</label>
-                        <input type="text" id="class-label" placeholder="Enter gesture label" />
-                    </div>
-                </div>
-
-                <div class="control-section record-button-section">
-                    <button id="record-button" class="record-button">Start Recording</button>
-                    <div id="recording-status" class="recording-status"></div>
-                    <div class="row-count-display">
-                        <span>Total Records: </span>
-                        <span id="row-count">0</span>
-                    </div>
-                </div>
-
-                <div class="control-section save-section">
-                    <button id="save-button" class="control-button primary">Save Recorded Data</button>
-                    <button id="clear-button" class="control-button warning">Clear Data</button>
-                </div>
-
-                <div class="control-section delete-section">
-                    <h3>Delete Records</h3>
-                    <div class="delete-controls-grid">
-                        <div class="delete-group">
-                            <label for="delete-id">Delete by ID:</label>
-                            <div class="delete-input-group">
-                                <input type="number" id="delete-id" placeholder="Enter ID" min="1" />
-                                <button id="delete-by-id" class="control-button delete">Delete</button>
-                            </div>
+            <div class="dashboard-row">
+                <div class="dashboard-card recording-card">
+                    <h3>Recording</h3>
+                    <div class="recording-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px 24px; align-items: center;">
+                        <div class="input-group">
+                            <label for="gesture-id">Gesture ID:</label>
+                            <input type="number" id="gesture-id" value="235" min="1" />
                         </div>
-                        <div class="delete-group">
-                            <label for="delete-label">Delete by Label:</label>
-                            <div class="delete-inputs-group">
-                                <input type="text" id="delete-label" placeholder="Enter label" />
-                                <button id="delete-by-label" class="control-button delete">Delete</button>
-                            </div>
+                        <div class="input-group">
+                            <label for="class-label">Class Label:</label>
+                            <input type="text" id="class-label" placeholder="Enter gesture label" />
+                        </div>
+                        <div class="button-group" style="grid-column: 1;">
+                            <button id="record-button" class="control-button primary record-button">Start Recording</button>
+                        </div>
+                        <div class="button-group" style="grid-column: 2;">
+                            <button id="save-button" class="control-button primary">Save Data</button>
+                        </div>
+                        <div class="row-count-group" style="grid-column: 1 / span 2; text-align: center; margin-top: 0;">
+                            <span>Total Records: <span id="row-count">0</span></span>
+                        </div>
+                        <div class="button-group" style="grid-column: 1 / span 2; display: flex; justify-content: center;">
+                            <button id="clear-button" class="control-button warning">Clear Data</button>
+                        </div>
+                        <div class="status-group" style="grid-column: 1 / span 2; text-align: center;">
+                            <span id="recording-status" class="recording-status"></span>
                         </div>
                     </div>
                 </div>
-
-                <div id="operation-status" class="operation-status"></div>
+                <div class="dashboard-card viewer-card">
+                    <div id="viewer-container" class="viewer-container"></div>
+                </div>
             </div>
 
-            <div class="visualization-container">
-                <div id="viewer-container" class="viewer-container"></div>
-                <div id="data-flow-container" class="data-flow-container"></div>
-            </div>
-
-            <div class="control-section train-section">
-                <button id="train-button" class="control-button primary">Train Model</button>
-                <div class="hyperparameter-config">
-                    <h4>Hyperparameters</h4>
-                    <label for="epochs">Epochs:</label>
-                    <input type="number" id="epochs" value="8" min="1" />
-
-                    <label for="batch-size">Batch Size:</label>
-                    <input type="number" id="batch-size" value="32" min="1" />
-
-                    <label for="lstm-units">LSTM Units:</label>
-                    <input type="number" id="lstm-units" value="64" min="1" />
+            <div class="dashboard-card delete-card">
+                <h3>Delete Records</h3>
+                <div class="delete-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: end; justify-items: center;">
+                    <div class="delete-group" style="width: 100%; display: flex; flex-direction: column; align-items: center;">
+                        <label for="delete-id" style="margin-bottom: 8px;">Delete by ID:</label>
+                        <div class="delete-input-row" style="display: flex; gap: 12px; width: 100%; justify-content: center;">
+                            <input type="number" id="delete-id" placeholder="Enter ID" min="1" style="flex: 1; min-width: 120px; max-width: 180px;" />
+                            <button id="delete-by-id" class="control-button delete" style="min-width: 90px;">Delete</button>
+                        </div>
+                    </div>
+                    <div class="delete-group" style="width: 100%; display: flex; flex-direction: column; align-items: center;">
+                        <label for="delete-label" style="margin-bottom: 8px;">Delete by Label:</label>
+                        <div class="delete-input-row" style="display: flex; gap: 12px; width: 100%; justify-content: center;">
+                            <input type="text" id="delete-label" placeholder="Enter label" style="flex: 1; min-width: 120px; max-width: 180px;" />
+                            <button id="delete-by-label" class="control-button delete" style="min-width: 90px;">Delete</button>
+                        </div>
+                    </div>
                 </div>
-
-                <!-- Training Status Messages -->
-                <div id="training-status" class="training-status" style="margin-top: 10px;"></div>
-
-                <!-- Removed Training Progress Bar -->
-
-
-                <!-- Training Status Text -->
-                <div id="training-status" style="margin-top: 10px; font-weight: bold;"></div>
-
-            </div>
-
-            <!-- New comprehensive training metrics section -->
-            <div id="training-metrics" style="margin-top: 30px; max-width: 700px; font-family: Arial, sans-serif; display:none;">
-
-                <h3>Training Metrics</h3>
-
-                <!-- Loss Chart -->
-                <div style="margin-bottom: 30px;">
-                    <canvas id="lossChart" style="max-height: 300px;"></canvas>
-                </div>
-
-                <!-- Accuracy Chart -->
-                <div style="margin-bottom: 30px;">
-                    <canvas id="accuracyChart" style="max-height: 300px;"></canvas>
-                </div>
-
-                <!-- Confusion Matrix Chart -->
-                <div style="margin-bottom: 30px;">
-                    <h4>Confusion Matrix</h4>
-                    <canvas id="confusionMatrixChart" style="max-height: 400px;"></canvas>
-                </div>
-
-                <!-- Final Test Metrics -->
-                <div id="finalMetrics" style="margin-bottom: 30px; font-weight: bold; font-size: 1.1em;"></div>
-
-                <!-- Class Labels -->
-                <div id="classLabels" style="margin-bottom: 30px;">
-                    <h4>Class Labels</h4>
-                    <ul id="classList" style="list-style-type: none; padding-left: 0;"></ul>
-                </div>
-
-                <!-- Precision, Recall, F1 Score -->
-                <div id="prfMetrics" style="margin-bottom: 30px;">
-                    <h4>Precision, Recall, F1 Score per Class</h4>
-                    <table id="prfTable" border="1" cellpadding="5" cellspacing="0"
-                        style="border-collapse: collapse; width: 100%; max-width: 600px;">
-                        <thead>
-                            <tr>
-                                <th>Class</th>
-                                <th>Precision</th>
-                                <th>Recall</th>
-                                <th>F1 Score</th>
-                            </tr>
-                        </thead>
-                        <tbody id="prfTableBody"></tbody>
-                    </table>
-                </div>
-
+                <div id="operation-status" class="operation-status" style="margin-top: 18px;"></div>
             </div>
 
             <div class="sensor-data-display">
@@ -196,6 +123,61 @@
             <div class="csv-display">
                 <h3>Recorded Data</h3>
                 <div id="csv-content" class="csv-content"></div>
+            </div>
+
+            <div class="dashboard-card training-card">
+                <h3>Training</h3>
+                <div class="control-section train-section" style="display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-end;">
+                    <button id="train-button" class="control-button primary" style="height: 44px; min-width: 160px;">Train Model</button>
+                    <div class="hyperparameter-config" style="display: flex; gap: 16px; align-items: flex-end; flex-wrap: wrap;">
+                        <div style="display: flex; flex-direction: column; gap: 4px;">
+                            <label for="epochs">Epochs:</label>
+                            <input type="number" id="epochs" value="8" min="1" style="width: 80px;" />
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 4px;">
+                            <label for="batch-size">Batch Size:</label>
+                            <input type="number" id="batch-size" value="32" min="1" style="width: 80px;" />
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 4px;">
+                            <label for="lstm-units">LSTM Units:</label>
+                            <input type="number" id="lstm-units" value="64" min="1" style="width: 80px;" />
+                        </div>
+                    </div>
+                    <div id="training-status" class="training-status" style="margin-top: 10px; flex-basis: 100%;"></div>
+                </div>
+                <div id="training-metrics" style="margin-top: 30px; font-family: Arial, sans-serif; display:none; width: 100%;">
+                    <h3>Training Metrics</h3>
+                    <div style="margin-bottom: 30px;">
+                        <canvas id="lossChart" style="max-height: 300px; width: 100%;"></canvas>
+                    </div>
+                    <div style="margin-bottom: 30px;">
+                        <canvas id="accuracyChart" style="max-height: 300px; width: 100%;"></canvas>
+                    </div>
+                    <div style="margin-bottom: 30px;">
+                        <h4>Confusion Matrix</h4>
+                        <canvas id="confusionMatrixChart" style="max-height: 400px; width: 100%;"></canvas>
+                    </div>
+                    <div id="finalMetrics" style="margin-bottom: 30px; font-weight: bold; font-size: 1.1em;"></div>
+                    <div id="classLabels" style="margin-bottom: 30px;">
+                        <h4>Class Labels</h4>
+                        <ul id="classList" style="list-style-type: none; padding-left: 0;"></ul>
+                    </div>
+                    <div id="prfMetrics" style="margin-bottom: 30px;">
+                        <h4>Precision, Recall, F1 Score per Class</h4>
+                        <table id="prfTable" border="1" cellpadding="5" cellspacing="0"
+                            style="border-collapse: collapse; width: 100%; max-width: 600px;">
+                            <thead>
+                                <tr>
+                                    <th>Class</th>
+                                    <th>Precision</th>
+                                    <th>Recall</th>
+                                    <th>F1 Score</th>
+                                </tr>
+                            </thead>
+                            <tbody id="prfTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </section>
     </main>
