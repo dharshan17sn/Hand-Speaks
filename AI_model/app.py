@@ -56,7 +56,7 @@ CORS(app, resources={
 class GeminiEnhancer:
     def __init__(self):
         self.api_key = GEMINI_API_KEY
-        self.endpoint = "https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash-lite:generateContent"
+        self.endpoint = "https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent"
 
         self.system_prompt = """
         You are a helpful language assistant. Your job is to improve the clarity, grammar, and tone of short texts.
@@ -69,7 +69,7 @@ class GeminiEnhancer:
         """.strip()
 
         self.tone_prompts = {
-            "FRIENDLY": "Make this sound friendly and approachable: ",
+            "FRIENDLY": "Make this sound extremely friendly and approachable: ",
             "PROFESSIONAL": "Make this sound formal and professional for business communication: ",
             "CASUAL": "Make this sound casual and conversational: ",
             "PERSUASIVE": "Make this more persuasive and compelling: ",
@@ -87,28 +87,27 @@ class GeminiEnhancer:
         if tone not in self.tone_prompts:
             tone = "FRIENDLY"
 
-        # Step 1: Grammar correction
-        grammar_prompt = f"Correct grammar and improve clarity while keeping the original meaning:\n{text}"
-        grammar_result = self._call_gemini(grammar_prompt)
-        if not grammar_result["success"]:
-            return {"error": grammar_result["error"], "original": text}
+        # # Step 1: Grammar correction
+        # grammar_prompt = f"Correct grammar and improve clarity while keeping the original meaning:\n{text}"
+        # grammar_result = self._call_gemini(grammar_prompt)
+        # if not grammar_result["success"]:
+        #     return {"error": grammar_result["error"], "original": text}
 
-        grammar_corrected = grammar_result["output"]
+        # grammar_corrected = grammar_result["output"]
 
         # Step 2: Tone adjustment
         tone_instruction = self.tone_prompts.get(tone, self.tone_prompts["FRIENDLY"])
-        tone_prompt = f"{tone_instruction}{grammar_corrected}"
+        tone_prompt = f"{tone_instruction}{text}"
         tone_result = self._call_gemini(tone_prompt)
         if not tone_result["success"]:
             return {
                 "error": tone_result["error"],
                 "original": text,
-                "grammar_corrected": grammar_corrected
+                "grammar_corrected": text
             }
 
         return {
             "original": text,
-            "grammar_corrected": grammar_corrected,
             "tone_adjusted": tone_result["output"],
             "success": True
         }

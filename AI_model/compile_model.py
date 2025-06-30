@@ -69,7 +69,7 @@ loss, accuracy = model.evaluate(X_test, y_test)
 print(f'Test Loss: {loss:.4f}, Test Accuracy: {accuracy:.4f}')
 
 # Save the model and the unique labels
-keras.saving.save_model(model, 'model.h5')
+model.save('model.h5')
 np.save('unique_labels.npy', unique_labels)
 
 # Plotting
