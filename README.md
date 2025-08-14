@@ -77,19 +77,19 @@
 		<blockquote>
 			<table>
 			<tr>
-				<td><b><a href='https://github.com/ankitpathak2004/Sign-language-recognition/blob/master/compile_model.py'>compile_model.py</a></b></td>
+				<td><b><a href='https://github.com/dharshan17sn/Hand-Speaks/blob/master/compile_model.py'>compile_model.py</a></b></td>
 				<td><code>❯ train the model </code></td>
 			</tr>
 			<tr>
-				<td><b><a href='https://github.com/ankitpathak2004/Sign-language-recognition/blob/master/dataset_creator.py'>dataset_creator.py</a></b></td>
+				<td><b><a href='https://github.com/dharshan17sn/Hand-Speaks/blob/master/dataset_creator.py'>dataset_creator.py</a></b></td>
 				<td><code>❯ create dataset </code></td>
 			</tr>
 			<tr>
-				<td><b><a href='https://github.com/ankitpathak2004/Sign-language-recognition/blob/master/realtime_test.py'>realtime_test.py</a></b></td>
+				<td><b><a href='https://github.com/dharshan17sn/Hand-Speaks/blob/master/realtime_test.py'>realtime_test.py</a></b></td>
 				<td><code>❯ test model on realtime data </code></td>
 			</tr>
 			<tr>
-				<td><b><a href='https://github.com/ankitpathak2004/Sign-language-recognition/blob/master/static_test.py'>static_test.py</a></b></td>
+				<td><b><a href='https://github.com/dharshan17sn/Hand-Speaks/blob/master/static_test.py'>static_test.py</a></b></td>
 				<td><code>❯ test model on static data </code></td>
 			</tr>
 			</table>
@@ -117,7 +117,7 @@ Install Sign-language-recognition using one of the following methods:
 
 1. Clone the Sign-language-recognition repository:
 ```sh
-git clone https://github.com/ankitpathak2004/Sign-language-recognition
+git clone https://github.com/dharshan17sn/Hand-Speaks.git
 ```
 
 2. Navigate to the project directory:
@@ -144,9 +144,9 @@ use realtime_test.py to test model with realtime data(requires smartwatch connec
 
 ##  Contributing
 
-- **💬 [Join the Discussions](https://github.com/ankitpathak2004/Sign-language-recognition/discussions)**: Share your insights, provide feedback, or ask questions.
-- **🐛 [Report Issues](https://github.com/ankitpathak2004/Sign-language-recognition/issues)**: Submit bugs found or log feature requests for the `Sign-language-recognition` project.
-- **💡 [Submit Pull Requests](https://github.com/ankitpathak2004/Sign-language-recognition/blob/main/CONTRIBUTING.md)**: Review open PRs, and submit your own PRs.
+- **💬 [Join the Discussions](https://github.com/dharshan17sn/Hand-Speaks/discussions)**: Share your insights, provide feedback, or ask questions.
+- **🐛 [Report Issues](https://github.com/dharshan17sn/Hand-Speaks/issues)**: Submit bugs found or log feature requests for the `Sign-language-recognition` project.
+- **💡 [Submit Pull Requests](https://github.com/dharshan17sn/Hand-Speaks/blob/main/CONTRIBUTING.md)**: Review open PRs, and submit your own PRs.
 
 <details closed>
 <summary>Contributing Guidelines</summary>
@@ -154,7 +154,7 @@ use realtime_test.py to test model with realtime data(requires smartwatch connec
 1. **Fork the Repository**: Start by forking the project repository to your github account.
 2. **Clone Locally**: Clone the forked repository to your local machine using a git client.
    ```sh
-   git clone https://github.com/ankitpathak2004/Sign-language-recognition
+   git clone https://github.com/dharshan17sn/Hand-Speaks.git
    ```
 3. **Create a New Branch**: Always work on a new branch, giving it a descriptive name.
    ```sh
@@ -177,13 +177,14 @@ use realtime_test.py to test model with realtime data(requires smartwatch connec
 <summary>Contributor Graph</summary>
 <br>
 <p align="left">
-   <a href="https://github.com{/ankitpathak2004/Sign-language-recognition/}graphs/contributors">
+   <a href="https://github.com{/dharshan17sn/Hand-Speaks}graphs/contributors">
       <img src="https://contrib.rocks/image?repo=ankitpathak2004/Sign-language-recognition">
    </a>
 </p>
 </details>
 
 ---
+
 
 
 
